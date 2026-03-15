@@ -1,0 +1,1019 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Kohler Chatbot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    :root { --gap: 14px; --radius: 12px; --card-bg:#fff; --muted:#666; }
+    body { margin:0; color:#222; font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:#f7f7f8; }
+    header { position: sticky; top:0; z-index:10; display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:#0d0d0d; color:#fff; border-bottom:1px solid #111; }
+    header h1 { margin:0; font-size:18px; letter-spacing:.2px; }
+    .brand { display:flex; align-items:center; gap:8px; }
+    .brand .dot { width:10px; height:10px; background:#2d6cdf; border-radius:50%; }
+
+    .container { max-width: 1080px; margin: 18px auto; padding: 0 16px; display: grid; gap: var(--gap); }
+    .panel { background: var(--card-bg); border: 1px solid #e9e9ec; border-radius: var(--radius); padding: 12px; }
+
+    /* Chat + Results stacked vertically */
+    .chat { display:grid; gap:10px; }
+    #chat-window { height: 220px; overflow:auto; background:#fafafa; border:1px solid #eee; border-radius: 10px; padding: 10px; }
+    .msg { margin:6px 0; padding:8px 10px; border-radius:8px; max-width: 80ch; line-height: 1.4; }
+    .msg.sys { background:#eef2ff; }
+    .msg.user { background:#d1e7ff; align-self:flex-end; }
+    .msg.bot  { background:#e8f5e9; }
+    .input-row { display:flex; gap:8px; }
+    .input-row input { flex:1; padding:10px; border:1px solid #ccc; border-radius: 8px; }
+    .input-row button { padding:10px 14px; border:0; background:#2d6cdf; color:#fff; border-radius:8px; cursor:pointer; }
+
+    /* Results as scrollable list */
+    #products { display:grid; gap:10px; max-height: 460px; overflow:auto; }
+    .item { display:grid; grid-template-columns: 120px 1fr auto; gap: 12px; align-items:center; border:1px solid #eee; background:#fff; border-radius: 10px; padding: 10px; }
+    .item img { width:120px; height:90px; object-fit:cover; border-radius:8px; border:1px solid #ddd; }
+    .item .title { font-weight:600; }
+    .item .meta { color: var(--muted); font-size: 13px; margin-top:2px; }
+    .item .price { font-weight:700; margin-top: 6px; }
+    .item .actions button { margin-right: 6px; }
+
+    /* Cart dropdown */
+    .cart-wrap { position:relative; }
+    #cart-btn { background:#2d6cdf; color:#fff; border:0; padding:10px 16px; border-radius:8px; cursor:pointer; font-weight:600; font-size:14px; transition: all 0.3s ease; }
+    #cart-btn:hover { background:#1e5fa3; transform: scale(1.05); }
+    #cart-count { margin-left:8px; font-weight:700; background:rgba(255,255,255,0.3); padding:2px 6px; border-radius:4px; }
+    #cart-panel { position:absolute; right:0; top:50px; width: 480px; background:#fff; border:1px solid #ddd; border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,0.15); display:none; padding:16px; max-height:80vh; overflow-y:auto; z-index:1000; }
+    #cart-panel h3 { margin:0 0 16px 0; font-size:18px; color:#222; border-bottom:2px solid #2d6cdf; padding-bottom:12px; }
+    #cart-items { margin-bottom:16px; }
+    .cart-row { display:grid; gap:12px; border:1px solid #e9e9ec; background:#f9fafb; border-radius:10px; padding:12px; margin-bottom:10px; }
+    .cart-row-img { width:80px; height:60px; object-fit:cover; border-radius:8px; border:1px solid #ddd; }
+    .cart-row-info { display:grid; gap:4px; flex:1; }
+    .cart-row-name { font-weight:600; color:#222; font-size:14px; }
+    .cart-row-meta { color:#999; font-size:12px; }
+    .cart-row-actions { display:flex; gap:6px; margin-top:8px; }
+    .cart-row-actions button { padding:4px 8px; font-size:11px; border:1px solid #ddd; background:#fff; border-radius:4px; cursor:pointer; transition: all 0.2s; }
+    .cart-row-actions button:hover { background:#f0f0f0; }
+    .cart-row-price { text-align:right; padding:12px; background:#f0f7ff; border-radius:8px; }
+    .cart-qty-section { display:flex; align-items:center; gap:8px; font-weight:600; }
+    .cart-line-total { font-size:16px; color:#2d6cdf; font-weight:700; }
+    .totals { display:grid; gap:10px; margin-top:16px; padding-top:16px; border-top:2px solid #e9e9ec; background:#f9fafb; padding:12px; border-radius:8px; }
+    .totals-row { display:flex; justify-content:space-between; font-size:14px; }
+    .totals-total { display:flex; justify-content:space-between; font-size:18px; font-weight:700; color:#2d6cdf; margin-top:8px; padding-top:8px; border-top:1px solid #e9e9ec; }
+    .cart-actions { display:flex; gap:8px; margin-top:12px; justify-content:flex-end; }
+    .cart-actions button { padding:10px 14px; border:none; border-radius:6px; cursor:pointer; font-weight:600; transition: all 0.3s; }
+    #clear-cart { background:#f3f4f6; color:#222; border:1px solid #e5e7eb; }
+    #clear-cart:hover { background:#e5e7eb; }
+    #checkout { background:#2d6cdf; color:#fff; border:none; padding:10px 14px; border-radius:6px; cursor:pointer; font-weight:600; transition: background 0.3s; }
+    #checkout:hover { background:#1e5fa3; }
+    #close-cart { background:#2d6cdf; color:#fff; }
+    #close-cart:hover { background:#1e5fa3; }
+    .cart-actions { display:flex; justify-content:space-between; align-items:center; margin-top:10px; }
+    .muted { color:#777; font-style:italic; }
+
+    /* Recently Viewed and Recommendations */
+    #recent-section, #recommend-section { display: none; }
+    .recent-grid, .recommend-grid { display:grid; gap:12px; max-height: 380px; overflow:auto; padding:8px 0; }
+    .recent-item, .recommend-item { display:grid; grid-template-columns: 120px 1fr auto; gap: 12px; align-items:center; border:1px solid #e5e7eb; background:#ffffff; border-radius: 10px; padding: 10px; transition: box-shadow 0.2s; }
+    .recent-item:hover, .recommend-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .recent-item img, .recommend-item img { width:120px; height:90px; object-fit:cover; border-radius:8px; border:1px solid #ddd; }
+    .recent-item .title, .recommend-item .title { font-weight:600; font-size:14px; }
+    .recent-item .meta, .recommend-item .meta { color: var(--muted); font-size: 12px; }
+    .recent-item .price, .recommend-item .price { font-weight:700; color:#2d6cdf; margin-top: 4px; }
+    .recent-item .actions, .recommend-item .actions { display: flex; margin-top:4px; }
+    .recent-item .actions button, .recommend-item .actions button { margin-right: 6px; padding:4px 8px; font-size:12px; }
+
+    /* Product Details Modal */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
+    .modal { background: #fff; width: min(820px, 92vw); max-height: 86vh; overflow: auto; border-radius: 12px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+    .modal header { display:flex; justify-content:space-between; align-items:center; padding:0; background:transparent; }
+    .modal .body { display:grid; grid-template-columns: 320px 1fr; gap: 16px; }
+    .modal .body img { width:100%; height:240px; object-fit:cover; border-radius:10px; border:1px solid #ddd; }
+    .modal .meta { color:#555; margin-top: 6px; }
+    .modal .price { font-size:18px; font-weight:700; margin-top: 8px; }
+    .modal footer { margin-top:12px; display:flex; gap:8px; }
+
+    /* ====== NEW: Compare Drawer & Modal ====== */
+    .compare-drawer {
+      position: sticky; bottom: 8px; z-index: 9;
+      background: #ffffff; border:1px solid #e1e1e6; border-radius: 12px;
+      box-shadow: 0 6px 24px rgba(0,0,0,.08);
+      padding: 10px; display: none; gap: 10px; align-items: center;
+    }
+    .compare-chips { display:flex; gap:8px; flex-wrap: wrap; }
+    .compare-chip {
+      display:flex; align-items:center; gap:6px; background:#f3f4f6; border-radius:999px; padding:6px 10px;
+      border:1px solid #e5e7eb;
+    }
+    .compare-chip img { width:28px; height:22px; object-fit:cover; border-radius:4px; border:1px solid #ddd; }
+    .compare-chip button { border:0; background:transparent; cursor:pointer; color:#666; }
+    #btn-compare-open {
+      margin-left:auto; background:#2d6cdf; color:#fff; border:0; padding:8px 12px; border-radius:8px; cursor:pointer;
+    }
+    #btn-compare-clear { background:#f3f4f6; border:1px solid #e5e7eb; padding:8px 12px; border-radius:8px; cursor:pointer; }
+
+    #compare-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; z-index:1001; }
+    #compare-modal { background:#fff; width:min(980px,92vw); max-height:86vh; overflow:auto; border-radius:12px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.25); }
+    #compare-modal header { display:flex; justify-content:space-between; align-items:center; }
+    .compare-grid { width:100%; border-collapse: collapse; margin-top:12px; }
+    .compare-grid th, .compare-grid td { border:1px solid #eee; padding:10px; text-align:left; vertical-align: top; }
+    .compare-grid th { background:#fafafa; font-weight:600; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand"><span class="dot"></span><h1>Kohler Sales Assistant</h1></div>
+    <div class="cart-wrap">
+      <button id="cart-btn" type="button">🛒 Cart <span id="cart-count">0</span></button>
+      <div id="cart-panel">
+        <h3>🛒 Shopping Cart</h3>
+        <div id="cart-items"></div>
+        <div class="totals">
+          <div class="totals-row">
+            <span>Subtotal:</span>
+            <span>$<span id="subtotal">0.00</span></span>
+          </div>
+          <div class="totals-row">
+            <span>GST (18%):</span>
+            <span>$<span id="gst">0.00</span></span>
+          </div>
+          <div class="totals-total">
+            <span>Total:</span>
+            <span>$<span id="total">0.00</span></span>
+          </div>
+        </div>
+        <div class="cart-actions">
+          <button id="clear-cart" type="button">Clear Cart</button>
+          <button id="checkout" type="button">Checkout</button>
+          <button id="close-cart" type="button">Close</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Hero (Kohler-like) -->
+    <section class="panel hero">
+      <div class="hero-copy">
+        <h2>Premium Kohler fixtures, curated for you.</h2>
+        <p class="muted">Ask for finishes, price ranges, or quick comparisons. Try: "matte black faucets under $300"</p>
+      </div>
+      <div class="hero-actions">
+        <button id="hero-browse" type="button">Browse Collections</button>
+      </div>
+    </section>
+    <!-- Chat -->
+    <section class="panel chat">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div class="panel-title">Assistant</div>
+        <div class="muted">AI-powered recommendations</div>
+      </div>
+      <div id="chat-window">
+        <div class="msg sys">Hi! Ask me for products, filters, or quick comparisons. (I’ll keep it short.)</div>
+      </div>
+      <div class="input-row">
+        <input id="msg" type="text" placeholder="e.g., Show me 3 matte black faucets under $300" />
+        <button id="send" type="button">Send</button>
+      </div>
+    </section>
+
+    <!-- Results (responsive card grid) -->
+    <section class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="panel-title">Results</div>
+        <div class="panel-actions">
+          <select id="sort-select" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px; margin-right:8px;">
+            <option value="">Sort by...</option>
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+            <option value="name-asc">Name: A to Z</option>
+            <option value="name-desc">Name: Z to A</option>
+            <option value="category">Category</option>
+          </select>
+          <button id="filter-btn" type="button">Filter</button>
+        </div>
+      </div>
+      <div id="products"></div>
+    </section>
+
+    <!-- Recently Viewed -->
+    <section class="panel" id="recent-section" style="display: none;">
+      <div class="panel-title">Recently Viewed</div>
+      <div id="recent-products" class="recent-grid"></div>
+    </section>
+
+    <!-- Recommendations -->
+    <section class="panel" id="recommend-section" style="display: none;">
+      <div class="panel-title">Recommended for You</div>
+      <div id="recommend-products" class="recommend-grid"></div>
+    </section>
+
+    <!-- ====== NEW: Compare Drawer ====== -->
+    <section id="compare-drawer" class="compare-drawer">
+      <strong>Compare:</strong>
+      <div class="compare-chips" id="compare-chips"></div>
+      <button id="btn-compare-open" type="button">Open Comparison</button>
+      <button id="btn-compare-clear" type="button" style="margin-left:8px;">Clear</button>
+    </section>
+  </div>
+
+  <!-- Product Details Modal -->
+  <div id="backdrop" class="modal-backdrop">
+    <div class="modal">
+      <header>
+        <h3 id="modal-title">Product Details</h3>
+        <button id="modal-close" type="button">✖</button>
+      </header>
+      <div class="body">
+        <img id="modal-img" src="" alt="Product image" />
+        <div>
+          <div id="modal-name" class="title"></div>
+          <div id="modal-color" class="meta"></div>
+          <div id="modal-price" class="price"></div>
+          <div id="modal-desc" class="meta">Premium Kohler quality, engineered for performance and durability.</div>
+
+          <!-- SPEC MODE -->
+          <div id="modal-spec-wrap" style="margin-top:10px">
+            <strong>Specification</strong>
+            <div id="modal-spec" class="meta"></div>
+          </div>
+          <footer id="modal-footer">
+            <button id="modal-add" type="button">Add to Cart</button>
+            <button id="modal-rem1" type="button">Remove 1</button>
+            <button id="modal-remAll" type="button">Remove All</button>
+            <button id="modal-spec-btn" type="button">Spec Mode</button>
+            <!-- NEW: Compare from modal -->
+            <button id="modal-compare" type="button" style="margin-left:auto;">Compare</button>
+          </footer>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== NEW: Compare Modal ====== -->
+  <div id="compare-backdrop">
+    <div id="compare-modal">
+      <header>
+        <h3>Compare Products</h3>
+        <button id="btn-compare-close" type="button">✖</button>
+      </header>
+      <table class="compare-grid" id="compare-table">
+        <!-- dynamically rendered -->
+      </table>
+    </div>
+  </div>
+
+  <!-- Filter Modal -->
+  <div id="filter-backdrop" class="modal-backdrop">
+    <div class="modal" style="width: min(600px, 90vw);">
+      <header>
+        <h3>Filter Products</h3>
+        <button id="filter-close" type="button">✖</button>
+      </header>
+      <div style="padding: 16px;">
+        <div style="margin-bottom: 20px;">
+          <label style="font-weight: 600; display: block; margin-bottom: 8px;">Price Range</label>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <input type="number" id="price-min" placeholder="Min $" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100px;" />
+            <span>to</span>
+            <input type="number" id="price-max" placeholder="Max $" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100px;" />
+          </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <label style="font-weight: 600; display: block; margin-bottom: 8px;">Category</label>
+          <div id="category-filters" style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <!-- Categories will be populated dynamically -->
+          </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <label style="font-weight: 600; display: block; margin-bottom: 8px;">Finish/Color</label>
+          <div id="color-filters" style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <!-- Colors will be populated dynamically -->
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button id="filter-clear" type="button" style="padding: 8px 16px; border: 1px solid #ccc; background: #f5f5f5; border-radius: 4px;">Clear All</button>
+          <button id="filter-apply" type="button" style="padding: 8px 16px; background: #2d6cdf; color: white; border: none; border-radius: 4px;">Apply Filters</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = sel => document.querySelector(sel);
+    let lastResults = [];
+    let modalPid = null;
+
+    // Sorting and filtering state
+    let currentProducts = [];
+    let activeFilters = {
+      priceMin: null,
+      priceMax: null,
+      categories: new Set(),
+      colors: new Set()
+    };
+
+    // ---- Chat ----
+    async function sendMessage() {
+      const msg = $("#msg").value.trim();
+      if (!msg) return;
+      appendMsg("user", msg);
+      $("#msg").value = "";
+      const body = new URLSearchParams({ msg });
+      try {
+        const res = await fetch("/get_response", { method:"POST", headers:{ "Content-Type":"application/x-www-form-urlencoded" }, body });
+        const data = await res.json();
+        const clipped = (data.response || "").split(/\n/).slice(0,3).join(" ");
+        appendMsg("bot", clipped || "(no response)");
+        if (data.products && data.products.length > 0) {
+            currentProducts = data.products;
+        }
+
+        updateDisplayedProducts();
+      } catch (e) {
+        console.error(e);
+        appendMsg("bot", "Sorry, I couldn’t reach the server.");
+      }
+    }
+    function appendMsg(role, text) {
+      const div = document.createElement("div");
+      div.className = "msg " + (role === "user" ? "user" : "bot");
+      div.textContent = text;
+      $("#chat-window").appendChild(div);
+      $("#chat-window").scrollTop = $("#chat-window").scrollHeight;
+    }
+    $("#send").addEventListener("click", (e) => { e.preventDefault(); sendMessage(); });
+    $("#msg").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); sendMessage(); } });
+
+    // ---- Results (list with images + actions) ----
+    function renderProducts(list) {
+      const container = $("#products");
+      container.innerHTML = "";
+      if (!list.length) {
+        container.innerHTML = "<div class='muted'>No products found. Try refining your request.</div>";
+        return;
+      }
+      list.forEach(p => {
+        const row = document.createElement("div");
+        row.className = "item";
+
+        const imgUrl = p.image || `https://picsum.photos/seed/${p.id}/400/300`;
+
+        row.innerHTML = `
+          <img src="${imgUrl}" alt="Product"/>
+          <div>
+            <div class="title">${p.name}</div>
+            <div class="meta">Color: ${p.color ?? "-"}</div>
+            <div class="price">$${Number(p.price).toFixed(2)}</div>
+          </div>
+          <div class="actions">
+           <button class="btn-details" data-id="${p.id}" type="button">Details</button>
+
+           <button class="btn-add" data-id="${p.id}" type="button">Add</button>
+           <button class="btn-rem1" data-id="${p.id}" type="button">Remove</button>
+           <button class="btn-compare" data-id="${p.id}" type="button">Compare</button>
+          </div>
+        `;
+
+        row.querySelector(".btn-details").addEventListener("click", () => openDetails(p.id));
+        row.querySelector(".btn-add").addEventListener("click", () => addToCart(p.id));
+        row.querySelector(".btn-rem1").addEventListener("click", () => removeOne(p.id));
+        row.querySelector(".btn-compare").addEventListener("click", () => toggleCompare(p.id));
+
+        container.appendChild(row);
+      });
+    }
+
+    function applySorting(products) {
+      const sortValue = $("#sort-select").value;
+      if (!sortValue) return products;
+
+      const sorted = [...products];
+
+      switch (sortValue) {
+        case "price-low":
+          return sorted.sort((a, b) => (a.price || 0) - (b.price || 0));
+        case "price-high":
+          return sorted.sort((a, b) => (b.price || 0) - (a.price || 0));
+        case "name-asc":
+          return sorted.sort((a, b) => a.name.localeCompare(b.name));
+        case "name-desc":
+          return sorted.sort((a, b) => b.name.localeCompare(a.name));
+        case "category":
+          return sorted.sort((a, b) => (a.category || "").localeCompare(b.category || ""));
+        default:
+          return products;
+      }
+    }
+
+    function applyFilters(products) {
+      return products.filter(p => {
+        // Price filter
+        if (activeFilters.priceMin !== null && (p.price || 0) < activeFilters.priceMin) return false;
+        if (activeFilters.priceMax !== null && (p.price || 0) > activeFilters.priceMax) return false;
+
+        // Category filter
+        if (activeFilters.categories.size > 0 && !activeFilters.categories.has(p.category)) return false;
+
+        // Color filter
+        if (activeFilters.colors.size > 0 && !activeFilters.colors.has(p.color)) return false;
+
+        return true;
+      });
+    }
+
+    function updateDisplayedProducts() {
+      let filtered = applyFilters(currentProducts);
+      let sorted = applySorting(filtered);
+      renderProducts(sorted);
+    }
+
+    // ---- Product modal ----
+    function openDetails(id) {
+      let p = currentProducts.find(x => x.id === id);
+      if (!p) {
+        console.error("Product not found:", id);
+        return;
+       }
+      if (!p) {
+        console.error("Product not found:", id);
+        return;
+      }
+      modalPid = id;
+      
+      // Track recently viewed
+      const formData = new FormData();
+      formData.append("id", id);
+      fetch("/recent_add", {
+        method: "POST",
+        body: formData
+      }).then(() => {
+        loadRecentlyViewed();
+        loadRecommendations();
+      }).catch(e => console.error("Failed to add to recent:", e));
+      
+      $("#modal-title").textContent = "Product Details";
+      $("#modal-name").style.display = "block";
+      $("#modal-color").style.display = "block";
+      $("#modal-price").style.display = "block";
+      $("#modal-desc").style.display = "block";
+      $("#modal-img").style.display = "block";
+      $("#modal-footer").style.display = "flex";
+
+      $("#modal-name").textContent = p.name;
+      $("#modal-color").textContent = `Color: ${p.color ?? "-"}`;
+      $("#modal-price").textContent = `$${Number(p.price || 0).toFixed(2)}`;
+      $("#modal-img").src = p.image || `https://picsum.photos/seed/${p.id}/400/300`;
+      $("#modal-spec").textContent = p.spec_mode || "No specification available.";
+
+      // Set Compare button label dynamically based on current compare list
+      getCompare().then(items => {
+        const exists = items.some(it => it.id === id);
+        $("#modal-compare").textContent = exists ? "Remove from Compare" : "Compare";
+      }).catch(e => console.error("Error getting compare list:", e));
+
+      // Hide the spec block initially - show only details
+      $("#modal-spec-wrap").style.display = "none";
+      // Reset Spec Mode button text
+      $("#modal-spec-btn").textContent = "Spec Mode";
+
+      $("#backdrop").style.display = "flex";
+    }
+
+    // Toggle between details and spec mode
+    function toggleSpecMode() {
+      const specWrap = $("#modal-spec-wrap");
+      const isShowingSpec = specWrap.style.display !== "none";
+      
+      if (isShowingSpec) {
+        // Back to details
+        $("#modal-name").style.display = "block";
+        $("#modal-color").style.display = "block";
+        $("#modal-price").style.display = "block";
+        $("#modal-desc").style.display = "block";
+        $("#modal-img").style.display = "block";
+        $("#modal-title").textContent = "Product Details";
+        specWrap.style.display = "none";
+        $("#modal-spec-btn").textContent = "Spec Mode";
+      } else {
+        // Switch to spec mode
+        $("#modal-name").style.display = "none";
+        $("#modal-color").style.display = "none";
+        $("#modal-price").style.display = "none";
+        $("#modal-desc").style.display = "none";
+        $("#modal-img").style.display = "none";
+        $("#modal-title").textContent = "Specification";
+        specWrap.style.display = "block";
+        $("#modal-spec-btn").textContent = "← Back to Details";
+      }
+    }
+
+    function closeDetails() { $("#backdrop").style.display = "none"; modalPid = null; }
+    
+    // Refresh cart display after cart operations
+    async function refreshCartDisplay() {
+      const cartData = await fetch("/get_cart").then(r => r.json());
+      const cartPanel = $("#cart-panel");
+      if (!cartData.items || cartData.items.length === 0) {
+        cartPanel.innerHTML = "<div class='muted'>Cart is empty</div>";
+        return;
+      }
+      cartPanel.innerHTML = "";
+      cartData.items.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "cart-row";
+        const img = item.image || `https://picsum.photos/seed/${item.id}/200/150`;
+        row.innerHTML = `
+          <img src="${img}" alt=""/>
+          <div>
+            <div style="font-weight:600;">${item.name}</div>
+            <div style="color:var(--muted);font-size:12px;">$${Number(item.price).toFixed(2)}</div>
+          </div>
+          <div style="text-align:center;">x${item.qty}</div>
+          <div>$${Number(item.line_total).toFixed(2)}</div>
+        `;
+        cartPanel.appendChild(row);
+      });
+      const totals = document.createElement("div");
+      totals.className = "totals";
+      totals.innerHTML = `
+        <div>Subtotal: $${Number(cartData.subtotal).toFixed(2)}</div>
+        <div>GST (18%): $${Number(cartData.gst).toFixed(2)}</div>
+        <div style="font-weight:700;">Total: $${Number(cartData.total).toFixed(2)}</div>
+      `;
+      cartPanel.appendChild(totals);
+    }
+    
+    $("#modal-close").addEventListener("click", closeDetails);
+    $("#backdrop").addEventListener("click", (e) => { if (e.target.id === "backdrop") closeDetails(); });
+    $("#modal-add").addEventListener("click", async () => { 
+      if (modalPid) {
+        await addToCart(modalPid);
+        await refreshCartDisplay();
+      }
+    });
+    $("#modal-rem1").addEventListener("click", async () => { 
+      if (modalPid) {
+        await removeOne(modalPid);
+        await refreshCartDisplay();
+      }
+    });
+    $("#modal-remAll").addEventListener("click", async () => { 
+      if (modalPid) {
+        await removeAll(modalPid);
+        await refreshCartDisplay();
+      }
+    });
+    $("#modal-spec-btn").addEventListener("click", toggleSpecMode);
+    // NEW: Compare toggle from modal
+    $("#modal-compare").addEventListener("click", async () => {
+      if (!modalPid) return;
+      await toggleCompare(modalPid);
+      // Refresh label after toggle
+      const items = await getCompare();
+      const exists = items.some(it => it.id === modalPid);
+      $("#modal-compare").textContent = exists ? "Remove from Compare" : "Compare";
+    });
+
+    // ---- Cart Dropdown ----
+    const cartBtn   = $("#cart-btn");
+    const cartPanel = $("#cart-panel");
+    cartBtn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      cartPanel.style.display = (cartPanel.style.display === "block") ? "none" : "block";
+      if (cartPanel.style.display === "block") await refreshCart();
+    });
+    $("#close-cart").addEventListener("click", () => { cartPanel.style.display = "none"; });
+
+    document.addEventListener("click", (e) => {
+      const within = cartPanel.contains(e.target) || cartBtn.contains(e.target);
+      if (!within) cartPanel.style.display = "none";
+    });
+
+    async function addToCart(id) {
+      const body = new URLSearchParams({ id });
+      await fetch("/add_to_cart", { method:"POST", headers:{ "Content-Type":"application/x-www-form-urlencoded" }, body });
+      await refreshCart();
+    }
+    async function removeOne(id) {
+      const body = new URLSearchParams({ id });
+      await fetch("/remove_from_cart", { method:"POST", headers:{ "Content-Type":"application/x-www-form-urlencoded" }, body });
+      await refreshCart();
+    }
+    async function removeAll(id) {
+      const body = new URLSearchParams({ id });
+      await fetch("/remove_all_from_cart", { method:"POST", headers:{ "Content-Type":"application/x-www-form-urlencoded" }, body });
+      await refreshCart();
+    }
+    $("#clear-cart").addEventListener("click", async () => { 
+       await fetch("/clear_cart", { method: "POST" }); 
+       await refreshCart(); 
+    });
+    $("#checkout").addEventListener("click", () => {
+      alert('Checkout feature is coming soon!');
+    });
+
+    async function refreshCart() {
+      const res = await fetch("/get_cart"); const data = await res.json();
+      $("#cart-count").textContent = data.count ?? 0;
+
+      const container = $("#cart-items");
+      container.innerHTML = "";
+      const items = data.items || [];
+      if (!items.length) {
+        container.innerHTML = "<div style='text-align:center; padding:20px; color:#999;'><p style='font-size:14px;'>Your cart is empty</p><p style='font-size:12px;'>Add products to get started</p></div>";
+      } else {
+        items.forEach(it => {
+          const row = document.createElement("div");
+          row.className = "cart-row";
+          row.style.cssText = "display: grid; grid-template-columns: 80px 1fr auto; gap: 12px; align-items: start;";
+          const img = it.image || `https://picsum.photos/seed/${it.id}/200/150`;
+          row.innerHTML = `
+            <img src="${img}" alt="" class="cart-row-img"/>
+            <div class="cart-row-info">
+              <div class="cart-row-name">${it.name}</div>
+              <div class="cart-row-meta">Color: ${it.color ?? "-"}</div>
+              <div style="margin-top:6px; font-size:13px; color:#2d6cdf; font-weight:600;">$${Number(it.price).toFixed(2)} each</div>
+              <div class="cart-row-actions">
+                <button class="btn-add" data-id="${it.id}" type="button">➕ Add</button>
+                <button class="btn-remove-one" data-id="${it.id}" type="button">❌ Remove</button>
+              </div>
+            </div>
+            <div class="cart-row-price">
+              <div style="font-size:12px; color:#999; margin-bottom:4px;">Quantity: <strong>${it.qty}</strong></div>
+              <div class="cart-line-total">$${Number(it.line_total).toFixed(2)}</div>
+            </div>
+          `;
+          row.querySelector(".btn-add").addEventListener("click", async () => {
+            await addToCart(it.id);
+            await refreshCart();
+          });
+          row.querySelector(".btn-remove-one").addEventListener("click", async () => {
+            await removeOne(it.id);
+            await refreshCart();
+          });
+          container.appendChild(row);
+        });
+      }
+
+      $("#subtotal").textContent = Number(data.subtotal || 0).toFixed(2);
+      $("#gst").textContent      = Number(data.gst      || 0).toFixed(2);
+      $("#total").textContent    = Number(data.total    || 0).toFixed(2);
+    }
+
+    // ====== NEW: Compare — API helpers ======
+    async function getCompare() {
+      const r = await fetch("/compare_get");
+      const j = await r.json();
+      return j.items || [];
+    }
+    async function addCompare(id) {
+      const body = new URLSearchParams({ id });
+      const r = await fetch("/compare_add", { method:"POST", headers:{ "Content-Type":"application/x-www-form-urlencoded" }, body });
+      if (!r.ok) {
+        const j = await r.json().catch(()=>({}));
+        alert(j.error || "Unable to add to comparison (max 3).");
+      }
+      return getCompare();
+    }
+    async function removeCompare(id) {
+      const body = new URLSearchParams({ id });
+      await fetch("/compare_remove", { method:"POST", headers:{ "Content-Type":"application/x-www-form-urlencoded" }, body });
+      return getCompare();
+    }
+    async function clearCompare() {
+      await fetch("/compare_clear", { method:"POST" });
+      return getCompare();
+    }
+
+    // ====== NEW: Compare — UI state ======
+    const compareDrawer   = $("#compare-drawer");
+    const compareChips    = $("#compare-chips");
+    const compareBackdrop = $("#compare-backdrop");
+    const compareTable    = $("#compare-table");
+
+    async function toggleCompare(id) {
+      const items = await getCompare();
+      const has = items.find(x => x.id === id);
+      const next = has ? await removeCompare(id) : await addCompare(id);
+      renderCompareDrawer(next);
+    }
+
+    function renderCompareDrawer(items) {
+      if (!items || !items.length) {
+        compareDrawer.style.display = "none";
+        compareChips.innerHTML = "";
+        return;
+      }
+      compareDrawer.style.display = "grid";
+      compareChips.innerHTML = "";
+      items.forEach(p => {
+        const chip = document.createElement("div");
+        chip.className = "compare-chip";
+        const img = p.image || `https://picsum.photos/seed/${p.id}/200/150`;
+        chip.innerHTML = `
+          <img src="${img}" alt=""/>
+          <span>${p.name}</span>
+          <button data-id="${p.id}" title="Remove">✖</button>
+        `;
+        chip.querySelector("button").addEventListener("click", async () => {
+          const next = await removeCompare(p.id);
+          renderCompareDrawer(next);
+        });
+        compareChips.appendChild(chip);
+      });
+    }
+
+    // ====== NEW: Compare — Modal open/close ======
+    $("#btn-compare-open").addEventListener("click", async () => {
+      const items = await getCompare();
+      renderCompareTable(items);
+      compareBackdrop.style.display = "flex";
+    });
+    $("#btn-compare-close").addEventListener("click", () => compareBackdrop.style.display = "none");
+    $("#compare-backdrop").addEventListener("click", (e) => {
+      if (e.target.id === "compare-backdrop") compareBackdrop.style.display = "none";
+    });
+    $("#btn-compare-clear").addEventListener("click", async () => {
+      const items = await clearCompare();
+      renderCompareDrawer(items);
+      // If modal is open, refresh it too
+      if (compareBackdrop.style.display === "flex") renderCompareTable(items);
+    });
+
+    function renderCompareTable(items) {
+      const cols = items.slice(0, 3);
+      if (!cols.length) {
+        compareTable.innerHTML = "<tr><td>No products selected.</td></tr>";
+        return;
+      }
+      const fields = [
+        { label: "Product",    key: "name", render: (p) => {
+          const img = p.image || `https://picsum.photos/seed/${p.id}/400/300`;
+          return `<div style="display:flex;gap:10px;align-items:center;">
+                    <img src="${img}" alt="" style="width:60px;height:45px;object-fit:cover;border:1px solid #ddd;border-radius:6px;" />
+                    <div>${p.name}</div>
+                  </div>`;
+        }},
+        { label: "Price",      key: "price",    render: (p) => p.price != null ? `$${Number(p.price).toFixed(2)}` : "-" },
+        { label: "Finish",     key: "color"  },
+        { label: "Collection", key: "collection" },
+        { label: "Category",   key: "category"   },
+        { label: "SkuID",      key: "sku"        },
+      ];
+
+      let html = "";
+      fields.forEach(row => {
+        html += `<tr><th>${row.label}</th>`;
+        cols.forEach(p => {
+          const val = row.render ? row.render(p) : (p[row.key] ?? "-");
+          html += `<td>${val}</td>`;
+        });
+        html += `</tr>`;
+      });
+
+      // Actions row
+      html += `<tr><th>Actions</th>`;
+      cols.forEach(p => {
+        html += `<td>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button onclick="addToCart(${p.id})">Add to Cart</button>
+            <button onclick="removeCompare(${p.id}).then(renderCompareInit)">Remove</button>
+          </div>
+        </td>`;
+      });
+      html += `</tr>`;
+
+      compareTable.innerHTML = html;
+    }
+
+    async function renderCompareInit(){
+      const items = await getCompare();
+      renderCompareDrawer(items);
+      renderCompareTable(items);
+      if (!items.length) compareBackdrop.style.display = "none";
+    }
+
+    // Initial states: cart + compare
+    refreshCart();
+    (async function initCompare(){
+      const items = await getCompare();
+      renderCompareDrawer(items);
+    })();
+    
+
+    // Small UI interactions
+    document.getElementById("hero-browse")?.addEventListener("click", () => {
+      // Redirect to Kohler website
+      window.open("https://www.kohler.com/en", "_blank");
+    });
+
+    $("#sort-select").addEventListener("change", updateDisplayedProducts);
+
+    $("#filter-btn").addEventListener("click", openFilterModal);
+    $("#filter-close").addEventListener("click", closeFilterModal);
+    $("#filter-backdrop").addEventListener("click", (e) => {
+      if (e.target.id === "filter-backdrop") closeFilterModal();
+    });
+    $("#filter-apply").addEventListener("click", applyFiltersAndClose);
+    $("#filter-clear").addEventListener("click", clearFilters);
+
+    function openFilterModal() {
+      populateFilterOptions();
+      $("#filter-backdrop").style.display = "flex";
+    }
+
+    function closeFilterModal() {
+      $("#filter-backdrop").style.display = "none";
+    }
+
+    function populateFilterOptions() {
+      // Get unique categories
+      const categories = [...new Set(currentProducts.map(p => p.category).filter(Boolean))];
+      const categoryContainer = $("#category-filters");
+      categoryContainer.innerHTML = "";
+      
+      categories.forEach(cat => {
+        const checkbox = document.createElement("label");
+        checkbox.style.cssText = "display: flex; align-items: center; gap: 4px; padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;";
+        checkbox.innerHTML = `
+          <input type="checkbox" value="${cat}" ${activeFilters.categories.has(cat) ? 'checked' : ''} />
+          ${cat}
+        `;
+        categoryContainer.appendChild(checkbox);
+      });
+
+      // Get unique colors
+      const colors = [...new Set(currentProducts.map(p => p.color).filter(Boolean))];
+      const colorContainer = $("#color-filters");
+      colorContainer.innerHTML = "";
+      
+      colors.forEach(color => {
+        const checkbox = document.createElement("label");
+        checkbox.style.cssText = "display: flex; align-items: center; gap: 4px; padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;";
+        checkbox.innerHTML = `
+          <input type="checkbox" value="${color}" ${activeFilters.colors.has(color) ? 'checked' : ''} />
+          ${color}
+        `;
+        colorContainer.appendChild(checkbox);
+      });
+
+      // Set price inputs
+      $("#price-min").value = activeFilters.priceMin || "";
+      $("#price-max").value = activeFilters.priceMax || "";
+    }
+
+    function applyFiltersAndClose() {
+      // Update price filters
+      const minVal = $("#price-min").value;
+      const maxVal = $("#price-max").value;
+      activeFilters.priceMin = minVal ? parseFloat(minVal) : null;
+      activeFilters.priceMax = maxVal ? parseFloat(maxVal) : null;
+
+      // Update category filters
+      activeFilters.categories.clear();
+      $("#category-filters").querySelectorAll("input:checked").forEach(cb => {
+        activeFilters.categories.add(cb.value);
+      });
+
+      // Update color filters
+      activeFilters.colors.clear();
+      $("#color-filters").querySelectorAll("input:checked").forEach(cb => {
+        activeFilters.colors.add(cb.value);
+      });
+
+      updateDisplayedProducts();
+      closeFilterModal();
+    }
+
+    function clearFilters() {
+      activeFilters = {
+        priceMin: null,
+        priceMax: null,
+        categories: new Set(),
+        colors: new Set()
+      };
+      $("#price-min").value = "";
+      $("#price-max").value = "";
+      $("#category-filters").querySelectorAll("input").forEach(cb => cb.checked = false);
+      $("#color-filters").querySelectorAll("input").forEach(cb => cb.checked = false);
+      updateDisplayedProducts();
+    }
+
+    // ---- Recently Viewed and Recommendations ----
+    async function loadRecentlyViewed() {
+      try {
+        const resp = await fetch("/recent_get");
+        const data = await resp.json();
+        if (data.ok && data.items && data.items.length > 0) {
+          renderRecentProducts(data.items);
+          $("#recent-section").style.display = "block";
+        } else {
+          $("#recent-section").style.display = "none";
+        }
+      } catch (e) {
+        console.error("Failed to load recently viewed:", e);
+        $("#recent-section").style.display = "none";
+      }
+    }
+
+    async function loadRecommendations() {
+      try {
+        const resp = await fetch("/recommend_get?limit=6");
+        const data = await resp.json();
+        if (data.ok && data.items && data.items.length > 0) {
+          renderRecommendProducts(data.items);
+          $("#recommend-section").style.display = "block";
+        } else {
+          $("#recommend-section").style.display = "none";
+        }
+      } catch (e) {
+        console.error("Failed to load recommendations:", e);
+        $("#recommend-section").style.display = "none";
+      }
+    }
+
+    function renderRecentProducts(products) {
+      const container = $("#recent-products");
+      container.innerHTML = "";
+      products.forEach(p => {
+        const row = document.createElement("div");
+        row.className = "item"; // reuse main product styling
+
+        const imgUrl = p.image || `https://picsum.photos/seed/${p.id}/400/300`;
+        row.innerHTML = `
+          <img src="${imgUrl}" alt="Product"/>
+          <div>
+            <div class="title">${p.name}</div>
+            <div class="meta">Color: ${p.color ?? "-"}</div>
+            <div class="price">$${Number(p.price || 0).toFixed(2)}</div>
+          </div>
+          <div class="actions">
+           <button class="btn-details" data-id="${p.id}" type="button">Details</button>
+           <button class="btn-add" data-id="${p.id}" type="button">Add</button>
+           <button class="btn-remAll" data-id="${p.id}" type="button">Remove</button>
+           <button class="btn-compare" data-id="${p.id}" type="button">Compare</button>
+          </div>
+        `;
+        row.querySelector(".btn-details").addEventListener("click", () => openDetails(p.id));
+        row.querySelector(".btn-add").addEventListener("click", () => addToCart(p.id));
+        row.querySelector(".btn-remAll").addEventListener("click", () => removeAll(p.id));
+        row.querySelector(".btn-compare").addEventListener("click", () => toggleCompare(p.id));
+        container.appendChild(row);
+      });
+    }
+
+    function renderRecommendProducts(products) {
+      const container = $("#recommend-products");
+      container.innerHTML = "";
+      products.forEach(p => {
+        const row = document.createElement("div");
+        row.className = "item"; // reuse main product card
+
+        const imgUrl = p.image || `https://picsum.photos/seed/${p.id}/400/300`;
+
+        row.innerHTML = `
+          <img src="${imgUrl}" alt="Product"/>
+          <div>
+            <div class="title">${p.name}</div>
+            <div class="meta">Color: ${p.color ?? "-"}</div>
+            <div class="price">$${Number(p.price || 0).toFixed(2)}</div>
+          </div>
+          <div class="actions">
+           <button class="btn-details" data-id="${p.id}" type="button">Details</button>
+           <button class="btn-add" data-id="${p.id}" type="button">Add</button>
+           <button class="btn-remAll" data-id="${p.id}" type="button">Remove</button>
+           <button class="btn-compare" data-id="${p.id}" type="button">Compare</button>
+          </div>
+        `;
+
+        row.querySelector(".btn-details").addEventListener("click", () => openDetails(p.id));
+        row.querySelector(".btn-add").addEventListener("click", () => addToCart(p.id));
+        row.querySelector(".btn-remAll").addEventListener("click", () => removeAll(p.id));
+        row.querySelector(".btn-compare").addEventListener("click", () => toggleCompare(p.id));
+
+        container.appendChild(row);
+      });
+    }
+
+    // Load personalization data and all products on page load
+    window.addEventListener("load", async () => {
+      // Load all products initially
+      try {
+        const res = await fetch("/browse_all");
+        const data = await res.json();
+        currentProducts = data.products || [];
+        updateDisplayedProducts();
+      } catch (e) {
+        console.error("Failed to load initial products:", e);
+      }
+
+      // Load personalization data
+      loadRecentlyViewed();
+      loadRecommendations();
+    });
+  </script>
+</body>
+</html>
