@@ -72,15 +72,7 @@
 
     /* Recently Viewed and Recommendations */
     #recent-section, #recommend-section { display: none; }
-    .recent-grid, .recommend-grid { display:grid; gap:12px; max-height: 380px; overflow:auto; padding:8px 0; }
-    .recent-item, .recommend-item { display:grid; grid-template-columns: 120px 1fr auto; gap: 12px; align-items:center; border:1px solid #e5e7eb; background:#ffffff; border-radius: 10px; padding: 10px; transition: box-shadow 0.2s; }
-    .recent-item:hover, .recommend-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .recent-item img, .recommend-item img { width:120px; height:90px; object-fit:cover; border-radius:8px; border:1px solid #ddd; }
-    .recent-item .title, .recommend-item .title { font-weight:600; font-size:14px; }
-    .recent-item .meta, .recommend-item .meta { color: var(--muted); font-size: 12px; }
-    .recent-item .price, .recommend-item .price { font-weight:700; color:#2d6cdf; margin-top: 4px; }
-    .recent-item .actions, .recommend-item .actions { display: flex; margin-top:4px; }
-    .recent-item .actions button, .recommend-item .actions button { margin-right: 6px; padding:4px 8px; font-size:12px; }
+    .recent-grid, .recommend-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:18px; max-height: 380px; overflow:auto; padding:8px 0; }
 
     /* Product Details Modal */
     .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
@@ -351,32 +343,55 @@
     function renderProducts(list) {
       const container = $("#products");
       container.innerHTML = "";
+
       if (!list.length) {
         container.innerHTML = "<div class='muted'>No products found. Try refining your request.</div>";
         return;
       }
+
       list.forEach(p => {
         const row = document.createElement("div");
-        row.className = "item";
+        row.className = "";
 
-        const imgUrl = p.image || `https://picsum.photos/seed/${p.id}/400/300`;
+        // ✅ SAFE FIELD MAPPING (THIS FIXES YOUR BUG)
+        const name = p.Collection || p.name || "Product";
+        const priceVal = p["Price USD"] || p.price || null;
+        const price = priceVal ? Number(priceVal).toFixed(2) : "-";
+
+        const imgUrl =
+          p["Image URL"] ||
+          p.image ||
+          p.image_url ||
+          p.img ||
+          `https://picsum.photos/seed/${p.id}/400/300`;
 
         row.innerHTML = `
-          <img src="${imgUrl}" alt="Product"/>
-          <div>
-            <div class="title">${p.name}</div>
-            <div class="meta">Color: ${p.color ?? "-"}</div>
-            <div class="price">$${Number(p.price).toFixed(2)}</div>
-          </div>
-          <div class="actions">
-           <button class="btn-details" data-id="${p.id}" type="button">Details</button>
+          <div class="card">
 
-           <button class="btn-add" data-id="${p.id}" type="button">Add</button>
-           <button class="btn-rem1" data-id="${p.id}" type="button">Remove</button>
-           <button class="btn-compare" data-id="${p.id}" type="button">Compare</button>
+            <div class="card__image">
+              <img src="${imgUrl}" />
+            </div>
+
+            <div class="card__footer">
+
+              <div class="card__info">
+                <div class="card__title">${name}</div>
+                <div class="card__price">$${price}</div>
+              </div>
+
+              <div class="card__actions">
+                <button class="btn-details">Details</button>
+                <button class="btn-add">Add</button>
+                <button class="btn-rem1">Remove</button>
+                <button class="btn-compare">Compare</button>
+              </div>
+
+            </div>
+
           </div>
         `;
 
+        // ✅ KEEP YOUR FUNCTIONALITY INTACT
         row.querySelector(".btn-details").addEventListener("click", () => openDetails(p.id));
         row.querySelector(".btn-add").addEventListener("click", () => addToCart(p.id));
         row.querySelector(".btn-rem1").addEventListener("click", () => removeOne(p.id));
@@ -938,29 +953,48 @@
     function renderRecentProducts(products) {
       const container = $("#recent-products");
       container.innerHTML = "";
+
       products.forEach(p => {
         const row = document.createElement("div");
-        row.className = "item"; // reuse main product styling
 
-        const imgUrl = p.image || `https://picsum.photos/seed/${p.id}/400/300`;
+        const name = p.name || p.Collection || "Product";
+        const priceVal = p.price || p["Price USD"] || null;
+        const price = priceVal ? Number(priceVal).toFixed(2) : "-";
+
+        const imgUrl =
+          p.image ||
+          p["Image URL"] ||
+          `https://picsum.photos/seed/${p.id}/400/300`;
+
         row.innerHTML = `
-          <img src="${imgUrl}" alt="Product"/>
-          <div>
-            <div class="title">${p.name}</div>
-            <div class="meta">Color: ${p.color ?? "-"}</div>
-            <div class="price">$${Number(p.price || 0).toFixed(2)}</div>
-          </div>
-          <div class="actions">
-           <button class="btn-details" data-id="${p.id}" type="button">Details</button>
-           <button class="btn-add" data-id="${p.id}" type="button">Add</button>
-           <button class="btn-remAll" data-id="${p.id}" type="button">Remove</button>
-           <button class="btn-compare" data-id="${p.id}" type="button">Compare</button>
+          <div class="card">
+
+            <div class="card__image">
+              <img src="${imgUrl}" />
+            </div>
+
+            <div class="card__footer">
+              <div class="card__info">
+                <div class="card__title">${name}</div>
+                <div class="card__price">$${price}</div>
+              </div>
+
+              <div class="card__actions">
+                <button class="btn-details">Details</button>
+                <button class="btn-add">Add</button>
+                <button class="btn-rem1">Remove</button>
+                <button class="btn-compare">Compare</button>
+              </div>
+            </div>
+
           </div>
         `;
+
         row.querySelector(".btn-details").addEventListener("click", () => openDetails(p.id));
         row.querySelector(".btn-add").addEventListener("click", () => addToCart(p.id));
-        row.querySelector(".btn-remAll").addEventListener("click", () => removeAll(p.id));
+        row.querySelector(".btn-rem1").addEventListener("click", () => removeAll(p.id));
         row.querySelector(".btn-compare").addEventListener("click", () => toggleCompare(p.id));
+
         container.appendChild(row);
       });
     }
@@ -968,30 +1002,46 @@
     function renderRecommendProducts(products) {
       const container = $("#recommend-products");
       container.innerHTML = "";
+
       products.forEach(p => {
         const row = document.createElement("div");
-        row.className = "item"; // reuse main product card
 
-        const imgUrl = p.image || `https://picsum.photos/seed/${p.id}/400/300`;
+        const name = p.name || p.Collection || "Product";
+        const priceVal = p.price || p["Price USD"] || null;
+        const price = priceVal ? Number(priceVal).toFixed(2) : "-";
+
+        const imgUrl =
+          p.image ||
+          p["Image URL"] ||
+          `https://picsum.photos/seed/${p.id}/400/300`;
 
         row.innerHTML = `
-          <img src="${imgUrl}" alt="Product"/>
-          <div>
-            <div class="title">${p.name}</div>
-            <div class="meta">Color: ${p.color ?? "-"}</div>
-            <div class="price">$${Number(p.price || 0).toFixed(2)}</div>
-          </div>
-          <div class="actions">
-           <button class="btn-details" data-id="${p.id}" type="button">Details</button>
-           <button class="btn-add" data-id="${p.id}" type="button">Add</button>
-           <button class="btn-remAll" data-id="${p.id}" type="button">Remove</button>
-           <button class="btn-compare" data-id="${p.id}" type="button">Compare</button>
+          <div class="card">
+
+            <div class="card__image">
+              <img src="${imgUrl}" />
+            </div>
+
+            <div class="card__footer">
+              <div class="card__info">
+                <div class="card__title">${name}</div>
+                <div class="card__price">$${price}</div>
+              </div>
+
+              <div class="card__actions">
+                <button class="btn-details">Details</button>
+                <button class="btn-add">Add</button>
+                <button class="btn-rem1">Remove</button>
+                <button class="btn-compare">Compare</button>
+              </div>
+            </div>
+
           </div>
         `;
 
         row.querySelector(".btn-details").addEventListener("click", () => openDetails(p.id));
         row.querySelector(".btn-add").addEventListener("click", () => addToCart(p.id));
-        row.querySelector(".btn-remAll").addEventListener("click", () => removeAll(p.id));
+        row.querySelector(".btn-rem1").addEventListener("click", () => removeOne(p.id));
         row.querySelector(".btn-compare").addEventListener("click", () => toggleCompare(p.id));
 
         container.appendChild(row);

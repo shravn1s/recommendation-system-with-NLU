@@ -310,48 +310,63 @@ header h1 {
   align-items: center;
   padding: 0;
   background: transparent;
+  border:none;
+  box-shadow: none;
 }
 .modal .body {
   display: grid;
-  grid-template-columns: 340px 1fr;
+  grid-template-columns: 280px 1fr;
   gap: 22px;
+  align-items: start;
 }
 .modal .body img {
   width: 100%;
-  height: 280px;
-  object-fit: cover;
-  border-radius: 12px;
-  border: 1px solid var(--border-soft);
+  height: 200px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: #f9f9f9;
+  padding: 10px;
 }
 
-/* ===== Spec-only modal styling ===== */
-.modal.spec-only {
-  width: min(720px, 92vw);
-  padding: 20px 22px;
+#modal-name {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 6px;
 }
-.modal.spec-only .body { grid-template-columns: 1fr; }
-.modal.spec-only .body img { display: none; }
-.modal.spec-only #modal-spec-wrap { padding: 18px; background: linear-gradient(180deg,#ffffff,#fbfdff); border-radius: 10px; border: 1px solid var(--border-soft); box-shadow: 0 10px 30px rgba(11,99,166,0.06); }
-.modal.spec-only #modal-spec { font-size: 15px; line-height: 1.6; color: #111827; max-height: 52vh; overflow:auto; padding-right:6px; }
-.modal.spec-only #modal-title { text-align: left; font-size: 18px; margin-bottom: 8px; }
-.modal.spec-only #modal-footer { display: none; }
+
+#modal-color {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+#modal-price {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
 
 /* Make long spec scroll nicely */
-#modal-spec::-webkit-scrollbar { width: 10px; }
-#modal-spec::-webkit-scrollbar-thumb { background: rgba(17,24,39,0.06); border-radius: 6px; }
 .modal .meta  { color: #555; margin-top: 6px; }
 .modal .price { font-size: 18px; font-weight: 700; margin-top: 8px; }
-.modal footer { margin-top: 18px; display: flex; gap: 12px; align-items: center; justify-content: flex-start; flex-wrap: wrap; }
+.modal footer { margin-top: 12px; display: flex; gap: 8px; align-items: center; justify-content: flex-start; flex-wrap: wrap; }
 .modal footer button {
-  padding: 12px 16px;
-  border-radius: 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 6px;
   cursor: pointer;
-  border: 1px solid rgba(15,23,42,0.04);
-  background: #fff;
-  min-width: 110px;
-  font-weight: 600;
+  transition: 0.2s;
 }
-.modal footer button:first-child { background: var(--accent); color:#fff; border-color: rgba(10,163,107,0.12); }
+.modal footer button:hover {
+  border: 1px solid #000;
+  background: rgba(0, 0, 0, 0.06);
+}
+.modal .body img {
+  display: block;
+  margin: auto;
+}
 .modal footer .muted-action { background: #fff; color: #6b7280; min-width: 86px; padding: 10px 12px; font-weight: 500; }
 
 /* ---------- Utilities ---------- */
@@ -369,3 +384,81 @@ header h1 {
 /* Add spacing between result cards and main content to reduce clutter */
 .container > .panel { margin-bottom: 14px; }
 .panel.hero { margin-bottom: 18px; }
+
+/* ---------- CLEAN PRODUCT CARD (FINAL) ---------- */
+
+.card {
+  background: #f9f9f9;
+  border-radius: 16px;
+  overflow: hidden;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* IMAGE AREA */
+.card__image img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.card__image img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* FOOTER */
+.card__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 10px;
+}
+
+/* LEFT SIDE (TITLE + PRICE) */
+.card__info {
+  display: flex;
+  flex-direction: column;
+}
+
+.card__title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.card__price {
+  font-size: 12px;
+  color: #333;
+}
+
+/* RIGHT SIDE BUTTONS */
+.card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+/* BUTTON STYLE (TRANSPARENT BORDER STYLE) */
+.card__actions button {
+  background: transparent;
+  border: 1px solid black;
+  padding: 4px 8px;
+  font-size: 11px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.card__actions button:hover {
+  background: black;
+  color: white;
+}
+
+/* SUBTLE HOVER (OPTIONAL BUT CLEAN) */
+.card:hover {
+  transform: translateY(-4px);
+}
