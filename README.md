@@ -1,26 +1,28 @@
-# recommendation-system-with-NLU
+@'
+# Kohler Chatbot (Flask + Gemini)
 
-This project implements a recommendation system that uses Natural Language Understanding (NLU) techniques to retrieve and recommend relevant products based on user queries.
+## Setup (Windows, PowerShell)
+py -3.13 -m venv .venv
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+. .\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 
-## Project Overview
+## Environment
+Create a `.env` file:
+GOOGLE_API_KEY=your_key_here
+FLASK_SECRET_KEY=anything_random
 
-The system processes user input using NLU to understand intent and extract meaningful information. Based on the interpreted query, the system retrieves relevant products from the dataset and generates recommendations.
+## Run
+python app.py
 
-## Features
+## Notes
+- Cart supports add, -1, remove, GST, and total.
+- Chat shows concise responses; scrollable product list appears below.
+- Click the top-right Cart button to open the dropdown panel.
+- Use Details to open the product modal with actions.
+'@ | Set-Content -Encoding UTF8 README.md
 
-* Natural Language Understanding for interpreting user queries
-* Data retrieval from structured product datasets
-* Similarity-based recommendation generation
-* Data preprocessing and feature extraction
+git add README.md
+git commit -m "Add README with setup instructions"
+git push
 
-## Technologies Used
-
-* Python
-* Pandas
-* Flask, REST API
-* HTML, CSS, JavaScript
-* VS code
-
-## Goal
-
-The goal of this project is to explore how Natural Language Understanding and data retrieval techniques can be combined to build intelligent recommendation systems.
