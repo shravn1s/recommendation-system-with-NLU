@@ -1,4 +1,3 @@
-
 # Kohler Chatbot (Flask + Gemini)
 
 ## Setup (Windows, PowerShell)
@@ -22,7 +21,9 @@ python app.py
 - Use Details to open the product modal with actions.
 '@ | Set-Content -Encoding UTF8 README.md
 
-git add README.md
+always git status first
+git add app.py routes services extract dataset static templates .gitignore(files to  be pushed)
+never git add .(key will be added to causing unnecessary efforts)
 git commit -m "Add README with setup instructions"
 git push
 
