@@ -1,4 +1,4 @@
-@'
+
 # Kohler Chatbot (Flask + Gemini)
 
 ## Setup (Windows, PowerShell)
