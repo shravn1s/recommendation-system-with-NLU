@@ -1,10 +1,16 @@
 from flask import Blueprint, request, jsonify, session
 from services.cart_services import group_cart
+from services.ai_service import normalized_products
 
 cart_bp = Blueprint("cart", __name__)
 
 
-# Add product to cart
+# ---------------- HELPER: VALIDATE PRODUCT ----------------
+def is_valid_product(pid):
+    return any(str(p["id"]) == str(pid) for p in normalized_products)
+
+
+# ---------------- ADD TO CART ----------------
 @cart_bp.route("/add_to_cart", methods=["POST"])
 def add_to_cart():
 
@@ -13,13 +19,16 @@ def add_to_cart():
     if not pid:
         return jsonify({"error": "Missing product id"}), 400
 
+    pid = str(pid)
+
+    # ✅ VALIDATION (NEW)
+    if not is_valid_product(pid):
+        return jsonify({"error": "Invalid product id"}), 400
+
     cart = session.get("cart")
 
-    # FIX: ensure cart is always a dict
     if not isinstance(cart, dict):
         cart = {}
-
-    pid = str(pid)
 
     cart[pid] = cart.get(pid, 0) + 1
 
@@ -28,11 +37,16 @@ def add_to_cart():
     return jsonify({"status": "added"})
 
 
-# Remove one quantity
+# ---------------- REMOVE ONE ----------------
 @cart_bp.route("/remove_from_cart", methods=["POST"])
 def remove_from_cart():
 
     pid = request.form.get("id")
+
+    if not pid:
+        return jsonify({"error": "Missing product id"}), 400
+
+    pid = str(pid)
 
     cart = session.get("cart", {})
 
@@ -46,11 +60,16 @@ def remove_from_cart():
     return jsonify({"status": "removed"})
 
 
-# Remove product completely
+# ---------------- REMOVE ALL ----------------
 @cart_bp.route("/remove_all_from_cart", methods=["POST"])
 def remove_all_from_cart():
 
     pid = request.form.get("id")
+
+    if not pid:
+        return jsonify({"error": "Missing product id"}), 400
+
+    pid = str(pid)
 
     cart = session.get("cart", {})
 
@@ -62,7 +81,7 @@ def remove_all_from_cart():
     return jsonify({"status": "removed_all"})
 
 
-# Get cart data
+# ---------------- GET CART ----------------
 @cart_bp.route("/get_cart")
 def get_cart():
 
@@ -71,14 +90,16 @@ def get_cart():
     if not isinstance(cart, dict):
         cart = {}
 
+    # ✅ CRITICAL: variant-aware grouping
     data = group_cart(cart)
 
     return jsonify(data)
 
-# Clear entire cart
+
+# ---------------- CLEAR CART ----------------
 @cart_bp.route("/clear_cart", methods=["POST"])
 def clear_cart():
 
     session["cart"] = {}
 
-    return jsonify({"status": "Cleared"})
+    return jsonify({"status": "cleared"})

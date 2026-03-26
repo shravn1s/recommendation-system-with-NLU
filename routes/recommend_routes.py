@@ -1,49 +1,53 @@
 from flask import Blueprint, jsonify, request, session
-from services.recommend_service import recommend_products
-from dataset.products import products
-from dataset.specs import SPEC_BY_SKU
+from services.ai_service import normalized_products
 
 recommend_bp = Blueprint("recommend", __name__)
 
-# Fast product lookup
-PRODUCT_BY_ID = {p["id"]: p for p in products}
+
+# ---------------- LOOKUP ----------------
+PRODUCT_BY_ID = {
+    str(p["id"]): p for p in normalized_products
+}
 
 
-# ---------- Helpers ----------
-
+# ---------------- SHAPE PRODUCT ----------------
 def shape_product(product):
     return {
         "id": product.get("id"),
+        "base_id": product.get("base_id"),
         "name": product.get("name"),
         "price": product.get("price"),
         "color": product.get("color"),
         "image": product.get("image"),
         "category": product.get("category"),
-        "collection": product.get("collection"),
-        "sku": product.get("sku"),
-        "spec_mode": SPEC_BY_SKU.get(product.get("sku"), "Specification not available"),
+        "product_link": product.get("product_link"),
     }
 
 
+# ---------------- ENSURE RECENT ----------------
 def ensure_recent():
     if "recent" not in session:
         session["recent"] = []
 
-    # Remove invalid product IDs
-    session["recent"] = [pid for pid in session["recent"] if pid in PRODUCT_BY_ID]
+    # keep only valid ids
+    session["recent"] = [
+        pid for pid in session["recent"]
+        if str(pid) in PRODUCT_BY_ID
+    ]
 
     return session["recent"]
 
 
-# ---------- Recently Viewed ----------
-
+# ---------------- ADD RECENT ----------------
 @recommend_bp.route("/recent_add", methods=["POST"])
 def recent_add():
 
-    pid = int(request.form.get("id", 0))
+    pid = request.form.get("id")
 
-    if pid not in PRODUCT_BY_ID:
+    if not pid or str(pid) not in PRODUCT_BY_ID:
         return jsonify({"ok": False, "error": "Invalid product"}), 400
+
+    pid = str(pid)
 
     recent = ensure_recent()
 
@@ -52,14 +56,14 @@ def recent_add():
 
     recent.insert(0, pid)
 
-    # Keep only last 10
-    del recent[10:]
+    del recent[10:]  # keep last 10
 
     session.modified = True
 
     return jsonify({"ok": True, "recent": recent})
 
 
+# ---------------- GET RECENT ----------------
 @recommend_bp.route("/recent_get")
 def recent_get():
 
@@ -69,7 +73,6 @@ def recent_get():
     items = [
         shape_product(PRODUCT_BY_ID[p])
         for p in recent
-        if p in PRODUCT_BY_ID
     ]
 
     return jsonify({
@@ -78,43 +81,50 @@ def recent_get():
     })
 
 
-# ---------- Recommendations ----------
-
+# ---------------- BASIC RECOMMEND ----------------
 @recommend_bp.route("/recommend_get")
 def recommend_get():
 
     limit = int(request.args.get("limit", 8))
-
     recent = ensure_recent()
 
-    # Cold start
+    # cold start
     if not recent:
         return jsonify({
             "ok": True,
-            "items": [shape_product(p) for p in products[:limit]]
+            "items": [
+                shape_product(p) for p in normalized_products[:limit]
+            ]
         })
 
+    # use last viewed as anchor
     anchor = recent[0]
+    anchor_product = PRODUCT_BY_ID.get(anchor)
 
-    items = recommend_products(anchor)
+    if not anchor_product:
+        return jsonify({
+            "ok": True,
+            "items": [
+                shape_product(p) for p in normalized_products[:limit]
+            ]
+        })
+
+    # simple similarity: same category
+    same_category = [
+        p for p in normalized_products
+        if p["category"] == anchor_product["category"]
+        and p["id"] != anchor
+    ]
+
+    results = same_category[:limit]
 
     return jsonify({
         "ok": True,
-        "items": [shape_product(p) for p in items[:limit]]
-    })
-
-    anchor = recent[0]
-
-    items = recommend_products(anchor)
-
-    return jsonify({
-        "ok": True,
-        "items": [shape_product(p) for p in items]
+        "items": [shape_product(p) for p in results]
     })
 
 
-# ---------- Personalization (Recent + Recommend) ----------
-
+# ---------------- PERSONALIZATION ----------------
 @recommend_bp.route("/personalize_get")
 def personalize_get():
 
@@ -123,17 +133,22 @@ def personalize_get():
     recent_items = [
         shape_product(PRODUCT_BY_ID[p])
         for p in recent
-        if p in PRODUCT_BY_ID
     ]
 
     if not recent:
-        recommend_items = [shape_product(p) for p in products[:8]]
+        recommend_items = [
+            shape_product(p) for p in normalized_products[:8]
+        ]
     else:
         anchor = recent[0]
+        anchor_product = PRODUCT_BY_ID.get(anchor)
+
         recommend_items = [
             shape_product(p)
-            for p in recommend_products(anchor)
-        ]
+            for p in normalized_products
+            if p["category"] == anchor_product["category"]
+            and p["id"] != anchor
+        ][:8]
 
     return jsonify({
         "ok": True,
@@ -142,12 +157,16 @@ def personalize_get():
     })
 
 
-# ---------- Get Single Product ----------
-
+# ---------------- GET SINGLE PRODUCT ----------------
 @recommend_bp.route("/product_get")
 def product_get():
 
-    pid = int(request.args.get("id", 0))
+    pid = request.args.get("id")
+
+    if not pid:
+        return jsonify({"ok": False, "error": "Missing id"}), 400
+
+    pid = str(pid)
 
     product = PRODUCT_BY_ID.get(pid)
 
@@ -162,12 +181,14 @@ def product_get():
         "item": shape_product(product)
     })
 
-# ---------- Browse All Products ----------
 
+# ---------------- BROWSE ALL ----------------
 @recommend_bp.route("/browse_all")
 def browse_all():
 
     return jsonify({
         "ok": True,
-        "products": [shape_product(p) for p in products]
-    })   
+        "products": [
+            shape_product(p) for p in normalized_products
+        ]
+    })

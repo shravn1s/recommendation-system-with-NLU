@@ -1,143 +1,84 @@
-from dataset.products import products
-
-PRODUCT_BY_ID = {p["id"]: p for p in products}
+from services.ai_service import normalized_products
 
 
-# ---------- NORMALIZATION HELPERS ----------
+# ---------------- RECOMMEND PRODUCTS ----------------
+def recommend_products(query=None, anchor_id=None, limit=8):
 
-def normalize_price(price, max_price=1000):
-    if price is None:
-        return 0
-    return price / max_price
+    try:
+        results = []
 
+        # ---------------- QUERY MODE ----------------
+        if query:
+            q = query.lower()
 
-def normalize_color(color):
-    if not color:
-        return ""
+            for p in normalized_products:
+                score = 0
 
-    c = color.lower()
+                text = f"{p['name']} {p['category']} {p['color']}".lower()
 
-    if "black" in c:
-        return "black"
-    if "chrome" in c:
-        return "chrome"
-    if "nickel" in c:
-        return "nickel"
-    if "white" in c:
-        return "white"
+                # keyword match
+                for word in q.split():
+                    if word in text:
+                        score += 2
 
-    return c.strip()
+                # intent boost
+                if "small" in q or "compact" in q:
+                    score += 2
+                if "modern" in q:
+                    score += 2
+                if "premium" in q or "luxury" in q:
+                    score += 3
 
+                if score > 0:
+                    results.append((score, p))
 
-def normalize_text(text):
-    return text.lower().strip() if text else ""
+        # ---------------- ANCHOR MODE ----------------
+        elif anchor_id:
+            anchor = next(
+                (p for p in normalized_products if str(p["id"]) == str(anchor_id)),
+                None
+            )
 
+            if not anchor:
+                return normalized_products[:limit]
 
-# ---------- VECTOR CREATION ----------
+            # recommend same category
+            results = [
+                (1, p) for p in normalized_products
+                if p["category"] == anchor["category"]
+                and p["id"] != anchor["id"]
+            ]
 
-def product_to_vector(p):
-    return {
-        "price": normalize_price(p.get("price")),
-        "category": normalize_text(p.get("category")),
-        "color": normalize_color(p.get("color")),
-        "collection": normalize_text(p.get("collection"))
-    }
+        # ---------------- FALLBACK ----------------
+        else:
+            return normalized_products[:limit]
 
+        # ---------------- SORT ----------------
+        results.sort(key=lambda x: x[0], reverse=True)
+        ranked = [p for _, p in results]
 
-# ---------- SIMILARITY ----------
+        # ---------------- DIVERSITY ----------------
+        final = []
+        seen = set()
 
-def compute_similarity(p1, p2):
+        for p in ranked:
+            if p["category"] not in seen:
+                final.append(p)
+                seen.add(p["category"])
 
-    weights = {
-        "price": 0.2,
-        "category": 0.4,
-        "color": 0.2,
-        "collection": 0.2
-    }
+            if len(final) >= limit:
+                break
 
-    score = 0
+        # fill remaining
+        if len(final) < limit:
+            for p in ranked:
+                if p not in final:
+                    final.append(p)
+                if len(final) >= limit:
+                    break
 
-    # price similarity
-    score += weights["price"] * (1 - abs(p1["price"] - p2["price"]))
+        return final[:limit]
 
-    # categorical matches
-    if p1["category"] == p2["category"]:
-        score += weights["category"]
-
-    if p1["color"] == p2["color"]:
-        score += weights["color"]
-
-    if p1["collection"] == p2["collection"]:
-        score += weights["collection"]
-
-    return score
-
-
-# ---------- EXPLANATION ----------
-
-def explain(anchor, p):
-
-    reasons = []
-
-    if anchor.get("category") == p.get("category"):
-        reasons.append("Same category")
-
-    if normalize_color(anchor.get("color")) == normalize_color(p.get("color")):
-        reasons.append("Similar finish")
-
-    if anchor.get("collection") == p.get("collection"):
-        reasons.append("Same collection")
-
-    if anchor.get("price") and p.get("price"):
-        if abs(anchor["price"] - p["price"]) < 50:
-            reasons.append("Similar price")
-
-    return reasons
-
-
-# ---------- MAIN RECOMMENDER ----------
-
-def recommend_products(anchor_id, limit=8):
-
-    anchor = PRODUCT_BY_ID.get(anchor_id)
-
-    if not anchor:
-        return []
-
-    anchor_vec = product_to_vector(anchor)
-
-    scored = []
-
-    for p in products:
-
-        if p["id"] == anchor_id:
-            continue
-
-        vec = product_to_vector(p)
-        sim = compute_similarity(anchor_vec, vec)
-
-        p_copy = p.copy()
-        p_copy["score"] = sim
-        p_copy["reason"] = explain(anchor, p)
-
-        scored.append((sim, p_copy))
-
-    # sort by similarity (highest first)
-    scored.sort(key=lambda x: x[0], reverse=True)
-
-    # ---------- DIVERSITY ----------
-    final = []
-    used_categories = set()
-
-    for sim, p in scored:
-
-        # allow some diversity but still keep relevance
-        if p["category"] not in used_categories or len(final) < 3:
-            final.append(p)
-            used_categories.add(p["category"])
-
-        if len(final) >= limit:
-            break
-
-    return final
-    
+    except Exception as e:
+        print("RECOMMEND ERROR:", e)
+        return normalized_products[:limit]
