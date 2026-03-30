@@ -102,4 +102,4 @@ def clear_cart():
 
     session["cart"] = {}
 
-    return jsonify({"status": "cleared"})
+    return jsonify({"success": True})

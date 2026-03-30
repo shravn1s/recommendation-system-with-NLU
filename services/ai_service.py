@@ -11,8 +11,9 @@ API_KEY = os.getenv("GROQ_API_KEY")
 # LOAD + CORRECT NORMALIZATION
 # ==============================
 
+
 def load_products():
-    with open("dataset/products.json", "r") as f:
+    with open("dataset/products.json", "r", encoding="utf-8") as f:
         raw_data = json.load(f)
 
     normalized = []
@@ -26,10 +27,10 @@ def load_products():
             # ✅ PRODUCT NODE
             if "variants" in node:
 
-                # 🔥 CORRECT COLLECTION
+                # 🔥 COLLECTION
                 collection = node.get("name", "").strip()
 
-                # 🔥 STRICT CATEGORY
+                # 🔥 CATEGORY DETECTION
                 category = None
                 for p in path:
                     p = p.lower()
@@ -45,25 +46,33 @@ def load_products():
                     elif "bath" in p:
                         category = "bathtub"
 
-                # 🚨 DO NOT ADD IF CATEGORY UNKNOWN
+                # 🚨 SKIP IF NO CATEGORY
                 if not category:
                     return
 
+                # ✅ LOOP VARIANTS (CORRECTLY INDENTED)
                 for vid, variant in node["variants"].items():
-                    normalized.append({
-                        "id": str(variant.get("product_id", vid)),
-                        "name": collection,
-                        "collection": collection,
-                        "category": category,
-                        "color": (variant.get("color") or "").lower(),
-                        "price": variant.get("price", 0),
-                        "image": variant.get("image", ""),
-                        "product_link": variant.get("link", ""),   # ✅ COMMA ADDED
-                        "description": node.get("detailed", ""),
-                        "dimensions": node.get("dimensions", "")
-                    })
+                    normalized.append(
+                        {
+                            "id": str(variant.get("product_id", vid)),
+                            "product_id": str(variant.get("product_id", vid)),
+                            "name": collection,
+                            "collection": collection,
+                            "category": category,
+                            "color": (variant.get("color") or "").lower(),
+                            "price": variant.get("price", 0),
+                            "image": variant.get("image", ""),
+                            "product_link": variant.get("link", ""),
+                            # 🔥 FULL DATA (THIS FIXES YOUR MODAL)
+                            "main_description": node.get("main_description", ""),
+                            "detailed": node.get("detailed", ""),
+                            "features": node.get("features", ""),
+                            "dimensions": node.get("dimensions", ""),
+                            "variants": node.get("variants", {}),
+                        }
+                    )
 
-            # continue traversal
+            # 🔁 CONTINUE TRAVERSAL
             for k, v in node.items():
                 traverse(v, path + [k])
 
@@ -72,8 +81,6 @@ def load_products():
                 traverse(item, path)
 
     traverse(raw_data)
-
-    print(f"✅ Loaded {len(normalized)} clean products")
 
     return normalized
 
@@ -85,6 +92,7 @@ normalized_products = load_products()
 # QUERY
 # ==============================
 
+
 def normalize_query(q):
     q = q.lower()
 
@@ -95,7 +103,7 @@ def normalize_query(q):
         "faucets": "faucet",
         "sinks": "sink",
         "toilets": "toilet",
-        "bathtubs": "bathtub"
+        "bathtubs": "bathtub",
     }
 
     for k, v in fixes.items():
@@ -119,24 +127,22 @@ def detect_category(q):
 
 
 # ==============================
-# RETRIEVAL (STRICT + COLLECTION BASED)
+# RETRIEVAL
 # ==============================
+
 
 def retrieve_products(query, limit=8):
     q = normalize_query(query)
     category = detect_category(q)
 
-    # ❌ If category doesn't exist → return empty
     if not category:
         return []
 
-    # filter strictly
     filtered = [p for p in normalized_products if p["category"] == category]
 
     if not filtered:
         return []
 
-    # group by collection
     seen = set()
     final = []
 
@@ -154,27 +160,24 @@ def retrieve_products(query, limit=8):
 
 
 # ==============================
-# AI RESPONSE (CLEAN)
+# AI RESPONSE
 # ==============================
+
 
 def generate_ai_response(user_msg):
     category = detect_category(user_msg)
 
     if not category:
         return (
-            "We offer a wide range of bathroom and kitchen products including faucets, sinks, showers, bathtubs, and accessories.",
+            "We offer a wide range of bathroom products including faucets, sinks, showers, bathtubs, and more.",
             [],
-            []
+            [],
         )
 
     products = retrieve_products(user_msg)
 
     if not products:
-        return (
-            f"We currently don’t have {category} products available.",
-            [],
-            []
-        )
+        return (f"We currently don’t have {category} products available.", [], [])
 
     collections = list({p["collection"] for p in products})
 

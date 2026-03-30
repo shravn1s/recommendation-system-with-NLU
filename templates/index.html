@@ -2,6 +2,7 @@
 <!DOCTYPE html>
 <html lang="en">
  <head>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <meta charset="utf-8"/>
   <title>
    Kohler Chatbot
@@ -21,14 +22,51 @@
 
     /* Chat + Results stacked vertically */
     .chat { display:grid; gap:10px; }
-    #chat-window { height: 220px; overflow:auto; background:#fafafa; border:1px solid #eee; border-radius: 10px; padding: 10px; }
-    .msg { margin:6px 0; padding:8px 10px; border-radius:8px; max-width: 80ch; line-height: 1.4; }
-    .msg.sys { background:#eef2ff; }
-    .msg.user { background:#d1e7ff; align-self:flex-end; }
-    .msg.bot  { background:#e8f5e9; }
+    #chat-window {
+      height: 240px;
+      overflow: auto;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 12px;
+
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
     .input-row { display:flex; gap:8px; }
-    .input-row input { flex:1; padding:10px; border:1px solid #ccc; border-radius: 8px; }
-    .input-row button { padding:10px 14px; border:0; background:#2d6cdf; color:#fff; border-radius:8px; cursor:pointer; }
+    .input-row input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      background: #fff;
+      color: #222;
+      font-size: 14px;
+
+      /* soft squishy look */
+      box-shadow:
+        inset 0 1px 0 #fff,
+        0 1px 0 #eee,
+        0 2px 0 #e6e6e6,
+        0 3px 0 #e0e0e0;
+
+      transition: all 0.2s ease;
+    }
+    .input-row input:focus {
+      outline: none;
+      border-color: #aaa;
+
+      box-shadow:
+        inset 0 1px 0 #fff,
+        0 1px 0 #eee,
+        0 2px 0 #e6e6e6,
+        0 0 0 2px rgba(0,0,0,0.05);
+    }
+
+    .input-row input::placeholder {
+      color: #999;
+    }
 
     /* Results as scrollable list */
     #products { display:grid; gap:10px; max-height: 460px; overflow:auto; }
@@ -41,26 +79,119 @@
 
     /* Cart dropdown */
     .cart-wrap { position:relative; }
-    #cart-btn { background:#2d6cdf; color:#fff; border:0; padding:10px 16px; border-radius:8px; cursor:pointer; font-weight:600; font-size:14px; transition: all 0.3s ease; }
-    #cart-btn:hover { background:#1e5fa3; transform: scale(1.05); }
+    #cart-btn {
+      background: #fff;
+      color: #222;
+      border: 1px solid #ddd;
+      padding: 10px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+
+      /* ✨ squishy effect */
+      box-shadow:
+        inset 0 1px 0 #fff,
+        0 1px 0 #eee,
+        0 2px 0 #e6e6e6,
+        0 3px 0 #e0e0e0,
+        0 4px 6px rgba(0,0,0,0.08);
+
+      transition: all 0.2s ease;
+    }
+
+    #cart-btn:hover {
+      transform: translateY(2px);
+
+      box-shadow:
+        inset 0 1px 0 #fff,
+        0 1px 0 #eee,
+        0 1px 0 #e6e6e6,
+        0 2px 0 #e0e0e0,
+        0 2px 4px rgba(0,0,0,0.08);
+    }
     #cart-count { margin-left:8px; font-weight:700; background:rgba(255,255,255,0.3); padding:2px 6px; border-radius:4px; }
     #cart-panel { position:absolute; right:0; top:50px; width: 480px; background:#fff; border:1px solid #ddd; border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,0.15); display:none; padding:16px; max-height:80vh; overflow-y:auto; z-index:1000; }
     #cart-panel h3 { margin:0 0 16px 0; font-size:18px; color:#222; border-bottom:2px solid #2d6cdf; padding-bottom:12px; }
     #cart-items { margin-bottom:16px; }
-    .cart-row { display:grid; gap:12px; border:1px solid #e9e9ec; background:#f9fafb; border-radius:10px; padding:12px; margin-bottom:10px; }
+    .cart-row {
+      display: grid;
+      grid-template-columns: 70px 1fr auto;
+      gap: 12px;
+      align-items: center;
+
+      padding: 12px;
+      border-radius: 12px;
+      background: #ffffff;
+      border: 1px solid #eee;
+
+      box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+      transition: 0.2s ease;
+    }
+
+    .cart-row:hover {
+      transform: translateY(-2px);
+    }
     .cart-row-img { width:80px; height:60px; object-fit:cover; border-radius:8px; border:1px solid #ddd; }
     .cart-row-info { display:grid; gap:4px; flex:1; }
-    .cart-row-name { font-weight:600; color:#222; font-size:14px; }
-    .cart-row-meta { color:#999; font-size:12px; }
+    .cart-row-name {
+      font-weight: 600;
+      font-size: 14px;
+      color: #111;
+    }
+
+    .cart-row-meta {
+      font-size: 13px;
+      color: #666;
+    }
+    #clear-cart {
+      background: #fff;
+      border: 1px solid #ddd;
+      color: #222;
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+
+    #checkout {
+      background: #2d6cdf;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-weight: 600;
+    }
     .cart-row-actions { display:flex; gap:6px; margin-top:8px; }
     .cart-row-actions button { padding:4px 8px; font-size:11px; border:1px solid #ddd; background:#fff; border-radius:4px; cursor:pointer; transition: all 0.2s; }
     .cart-row-actions button:hover { background:#f0f0f0; }
-    .cart-row-price { text-align:right; padding:12px; background:#f0f7ff; border-radius:8px; }
+    .cart-row-price {
+      font-weight: 700;
+      font-size: 16px;
+      color: #0b63a6;
+    }
     .cart-qty-section { display:flex; align-items:center; gap:8px; font-weight:600; }
     .cart-line-total { font-size:16px; color:#2d6cdf; font-weight:700; }
-    .totals { display:grid; gap:10px; margin-top:16px; padding-top:16px; border-top:2px solid #e9e9ec; background:#f9fafb; padding:12px; border-radius:8px; }
-    .totals-row { display:flex; justify-content:space-between; font-size:14px; }
-    .totals-total { display:flex; justify-content:space-between; font-size:18px; font-weight:700; color:#2d6cdf; margin-top:8px; padding-top:8px; border-top:1px solid #e9e9ec; }
+    .totals {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 14px;
+      margin-top: 12px;
+
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+    .totals-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      color: #444;
+    }
+
+    .totals-total {
+      display: flex;
+      justify-content: space-between;
+      font-size: 20px;
+      font-weight: 700;
+      color: #1f2937;
+      margin-top: 10px;
+   }
     .cart-actions { display:flex; gap:8px; margin-top:12px; justify-content:flex-end; }
     .cart-actions button { padding:10px 14px; border:none; border-radius:6px; cursor:pointer; font-weight:600; transition: all 0.3s; }
     #clear-cart { background:#f3f4f6; color:#222; border:1px solid #e5e7eb; }
@@ -75,16 +206,6 @@
     /* Recently Viewed and Recommendations */
     #recent-section, #recommend-section { display: none; }
     .recent-grid, .recommend-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:18px; max-height: 380px; overflow:auto; padding:8px 0; }
-
-    /* Product Details Modal */
-    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
-    .modal { background: #fff; width: min(820px, 92vw); max-height: 86vh; overflow: auto; border-radius: 12px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
-    .modal header { display:flex; justify-content:space-between; align-items:center; padding:0; background:transparent; }
-    .modal .body { display:grid; grid-template-columns: 320px 1fr; gap: 16px; }
-    .modal .body img { width:100%; height:240px; object-fit:cover; border-radius:10px; border:1px solid #ddd; }
-    .modal .meta { color:#555; margin-top: 6px; }
-    .modal .price { font-size:18px; font-weight:700; margin-top: 8px; }
-    .modal footer { margin-top:12px; display:flex; gap:8px; }
 
     /* ====== NEW: Compare Drawer & Modal ====== */
     .compare-drawer {
@@ -104,13 +225,11 @@
       margin-left:auto; background:#2d6cdf; color:#fff; border:0; padding:8px 12px; border-radius:8px; cursor:pointer;
     }
     #btn-compare-clear { background:#f3f4f6; border:1px solid #e5e7eb; padding:8px 12px; border-radius:8px; cursor:pointer; }
-
-    #compare-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; z-index:1001; }
-    #compare-modal { background:#fff; width:min(980px,92vw); max-height:86vh; overflow:auto; border-radius:12px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.25); }
     #compare-modal header { display:flex; justify-content:space-between; align-items:center; }
-    .compare-grid { width:100%; border-collapse: collapse; margin-top:12px; }
-    .compare-grid th, .compare-grid td { border:1px solid #eee; padding:10px; text-align:left; vertical-align: top; }
-    .compare-grid th { background:#fafafa; font-weight:600; }
+    #compare-modal header h3 {
+    font-size: 18px;
+    font-weight: 600;
+  }
   </style>
  </head>
  <body>
@@ -124,10 +243,7 @@
    </div>
    <div class="cart-wrap">
     <button id="cart-btn" type="button">
-     🛒 Cart
-     <span id="cart-count">
-      0
-     </span>
+      Cart <span id="cart-count">0</span>
     </button>
     <div id="cart-panel">
      <h3>
@@ -185,31 +301,11 @@
    </div>
   </header>
   <div class="container">
-   <!-- Hero (Kohler-like) -->
-   <section class="panel hero">
-    <div class="hero-copy">
-     <h2>
-      Premium Kohler fixtures, curated for you.
-     </h2>
-     <p class="muted">
-      Ask for finishes, price ranges, or quick comparisons. Try: "matte black faucets under $300"
-     </p>
-    </div>
-    <div class="hero-actions">
-     <button id="hero-browse" type="button">
-      Browse Collections
-     </button>
-    </div>
-   </section>
+
    <!-- Chat -->
    <section class="panel chat">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-     <div class="panel-title">
+    <div class="panel-title">
       Assistant
-     </div>
-     <div class="muted">
-      AI-powered recommendations
-     </div>
     </div>
     <div id="chat-window">
      <div class="msg sys">
@@ -228,31 +324,6 @@
     <div style="display:flex;justify-content:space-between;align-items:center;">
      <div class="panel-title">
       Results
-     </div>
-     <div class="panel-actions">
-      <select id="sort-select" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px; margin-right:8px;">
-       <option value="">
-        Sort by...
-       </option>
-       <option value="price-low">
-        Price: Low to High
-       </option>
-       <option value="price-high">
-        Price: High to Low
-       </option>
-       <option value="name-asc">
-        Name: A to Z
-       </option>
-       <option value="name-desc">
-        Name: Z to A
-       </option>
-       <option value="category">
-        Category
-       </option>
-      </select>
-      <button id="filter-btn" type="button">
-       Filter
-      </button>
      </div>
     </div>
     <div id="products">
@@ -284,80 +355,25 @@
     <button id="btn-compare-open" type="button">
      Open Comparison
     </button>
-    <button id="btn-compare-clear" style="margin-left:8px;" type="button">
+    <button id="btn-compare-clear" type="button">
      Clear
     </button>
    </section>
   </div>
-  <!-- Product Details Modal -->
-  <div class="modal-backdrop" id="backdrop">
-   <div class="modal">
-    <header>
-     <h3 id="modal-title">
-      Product Details
-     </h3>
-     <button id="modal-close" type="button">
-      ✖
-     </button>
-    </header>
-    <div class="body">
-     <img alt="Product image" id="modal-img" src=""/>
-     <div>
-      <div class="title" id="modal-name">
-      </div>
-      <div class="meta" id="modal-color">
-      </div>
-      <div class="price" id="modal-price">
-      </div>
-      <div class="meta" id="modal-desc">
-       Premium Kohler quality, engineered for performance and durability.
-      </div>
-      <!-- SPEC MODE -->
-      <div id="modal-spec-wrap" style="margin-top:10px">
-       <strong>
-        Specification
-       </strong>
-       <div class="meta" id="modal-spec">
-       </div>
-      </div>
-      <footer id="modal-footer">
-       <button id="modal-add" type="button">
-        Add to Cart
-       </button>
-       <button id="modal-rem1" type="button">
-        Remove 1
-       </button>
-       <button id="modal-remAll" type="button">
-        Remove All
-       </button>
-       <button id="modal-spec-btn" type="button">
-        Spec Mode
-       </button>
-       <!-- NEW: Compare from modal -->
-       <button id="modal-compare" style="margin-left:auto;" type="button">
-        Compare
-       </button>
-      </footer>
-     </div>
-    </div>
-   </div>
-  </div>
+
   <!-- ====== NEW: Compare Modal ====== -->
   <div id="compare-backdrop">
-   <div id="compare-modal">
+  <div id="compare-modal">
+
     <header>
-     <h3>
-      Compare Products
-     </h3>
-     <button id="btn-compare-close" type="button">
-      ✖
-     </button>
+      <h3>Compare Products</h3>
+      <button id="btn-compare-close">✖</button>
     </header>
-    <table class="compare-grid" id="compare-table">
-     <!-- dynamically rendered -->
-    </table>
-   </div>
+
+    <table class="compare-grid" id="compare-table"></table>
+
   </div>
+</div>
   <!-- Filter Modal -->
   <div class="modal-backdrop" id="filter-backdrop">
    <div class="modal" style="width: min(600px, 90vw);">
@@ -370,19 +386,19 @@
      </button>
     </header>
     <div style="padding: 16px;">
-     <div style="margin-bottom: 20px;">
+     <div class="mb-lg">
       <label style="font-weight: 600; display: block; margin-bottom: 8px;">
        Price Range
       </label>
       <div style="display: flex; gap: 10px; align-items: center;">
-       <input id="price-min" placeholder="Min $" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100px;" type="number"/>
+       <input id="price-min" placeholder="Min $" type="number" />
        <span>
         to
        </span>
        <input id="price-max" placeholder="Max $" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100px;" type="number"/>
       </div>
      </div>
-     <div style="margin-bottom: 20px;">
+     <div class="mb-lg">
       <label style="font-weight: 600; display: block; margin-bottom: 8px;">
        Category
       </label>
@@ -390,7 +406,7 @@
        <!-- Categories will be populated dynamically -->
       </div>
      </div>
-     <div style="margin-bottom: 20px;">
+     <div class="mb-lg">
       <label style="font-weight: 600; display: block; margin-bottom: 8px;">
        Finish/Color
       </label>
@@ -411,6 +427,7 @@
   </div>
   <script>
     const $ = sel => document.querySelector(sel);
+    let compareList = new Map();
 
     let currentProducts = [];
     let activeFilters = {
@@ -494,14 +511,32 @@
     }
 
     async function loadCompare() {
-      try {
-        const res = await fetch("/compare_get");
-        const data = await res.json();
+      const res = await fetch("/compare_get");
+      const data = await res.json();
 
-        console.log("Compare:", data);
-      } catch (e) {
-        console.error(e);
+      const drawer = document.getElementById("compare-drawer");
+      const chips = document.getElementById("compare-chips");
+
+      chips.innerHTML = "";
+
+      if (!data.items || data.items.length === 0) {
+        drawer.style.display = "none";
+        return;
       }
+
+      drawer.style.display = "flex";
+
+      data.items.forEach(p => {
+        const chip = document.createElement("div");
+        chip.className = "compare-chip";
+
+        chip.innerHTML = `
+          <img src="${p.image}">
+          <span>${p.name}</span>
+        `;
+
+        chips.appendChild(chip);
+      });
     }
 
     // ---------------- RENDER ----------------
@@ -524,43 +559,22 @@
           <div>
             <div class="title">${p.name}</div>
             <div class="meta">${p.category}</div>
-            <div class="price">${p.price}</div>
+            ${(() => {
+              const price = parseFloat(String(p.price).replace("$", ""));
+              return `<div class="price">$${price.toFixed(2)}</div>`;
+            })()}
           </div>
           <div class="actions">
-            <button onclick="openDetails('${p.id}')">Details</button>
+            <button onclick="openDetails('${p.product_id || p.id}')">Details</button>
             <button onclick="addToCart('${p.id}')">Add</button>
             <button onclick="removeOne('${p.id}')">Remove</button>
-            <button onclick="toggleCompare('${p.id}')">Compare</button>
+            <button onclick="toggleCompare('${p.id}', this)">Compare</button>
           </div>
         `;
 
         container.appendChild(card);
       });
     }
-
-    // ---------------- SORT ----------------
-    function applySorting(products) {
-      const sortValue = $("#sort-select").value;
-      if (!sortValue) return products;
-
-      const sorted = [...products];
-
-      switch (sortValue) {
-        case "price-low":
-          return sorted.sort((a, b) => (a.price || 0) - (b.price || 0));
-        case "price-high":
-          return sorted.sort((a, b) => (b.price || 0) - (a.price || 0));
-        case "name-asc":
-          return sorted.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-        case "name-desc":
-          return sorted.sort((a, b) => (b.name || "").localeCompare(a.name || ""));
-        case "category":
-          return sorted.sort((a, b) => (a.category || "").localeCompare(b.category || ""));
-        default:
-          return products;
-      }
-    }
-
 
     // ---------------- FILTER ----------------
     function applyFilters(products) {
@@ -582,8 +596,7 @@
 
     function updateDisplayedProducts() {
       const filtered = applyFilters(currentProducts);
-      const sorted = applySorting(filtered);
-      renderProducts(sorted);
+      renderProducts(filtered);
     }
 
     // ================= ACTIONS =================
@@ -594,6 +607,47 @@
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({ id })
       });
+
+      updateCart(); // ⭐ THIS is what was missing
+    }
+
+    async function updateCart() {
+      const res = await fetch("/get_cart");
+      const data = await res.json();
+
+      let count = 0;
+      const container = document.getElementById("cart-items");
+
+      container.innerHTML = "";
+
+      data.items.forEach(item => {
+        count += item.quantity;
+
+        const div = document.createElement("div");
+        div.className = "cart-row";
+
+        div.innerHTML = `
+          <img src="${item.image}" class="cart-row-img">
+
+          <div class="cart-row-info">
+            <div class="cart-row-name">${item.name}</div>
+            <div class="cart-row-meta">
+              Qty: ${item.quantity} × $${item.price.toFixed(2)}
+            </div>
+          </div>
+
+          <div class="cart-row-price">
+            $${item.total.toFixed(2)}
+          </div>
+        `;
+
+        container.appendChild(div);
+      });
+
+      document.getElementById("cart-count").innerText = data.count;
+      document.getElementById("subtotal").innerText = data.subtotal.toFixed(2);
+      document.getElementById("gst").innerText = data.gst.toFixed(2);
+      document.getElementById("total").innerText = data.total.toFixed(2);
     }
 
     async function removeOne(id) {
@@ -602,79 +656,375 @@
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({ id })
       });
+
+      updateCart(); // ⭐ same here
     }
 
-    async function toggleCompare(id) {
-      await fetch("/compare_add", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ id })
+    async function toggleCompare(id, btn) {
+
+      if (btn.classList.contains("active")) {
+        // REMOVE
+        await fetch("/compare_remove", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({ id })
+        });
+
+        btn.classList.remove("active");
+        btn.innerText = "Compare";
+
+      } else {
+        // ADD
+        const res = await fetch("/compare_add", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({ id })
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+          alert(data.error);
+          return;
+        }
+
+        btn.classList.add("active");
+        btn.innerText = "Comparing ✓";
+      }
+
+      loadCompare(); // refresh UI
+    }
+
+    function updateCompareDrawer() {
+      const drawer = document.getElementById("compare-drawer");
+      const chips = document.getElementById("compare-chips");
+
+      chips.innerHTML = "";
+
+      if (compareList.size === 0) {
+        drawer.style.display = "none";
+        return;
+      }
+
+      drawer.style.display = "flex";
+
+      compareList.forEach(p => {
+        const chip = document.createElement("div");
+        chip.className = "compare-chip";
+
+        chip.innerHTML = `
+          <img src="${p.image}">
+          <span>${p.name}</span>
+        `;
+
+        chips.appendChild(chip);
       });
-
-      loadCompare();
     }
+
+    document.getElementById("btn-compare-open").onclick = () => {
+      openCompareModal();
+    };
+
+    async function openCompareModal() {
+
+      const modal = document.getElementById("compare-backdrop");
+      const table = document.getElementById("compare-table");
+
+      modal.style.display = "flex";
+
+      // -------- GET PRODUCTS --------
+      const res = await fetch("/compare_get");
+      const data = await res.json();
+
+      const items = data.items;
+
+      if (!items || items.length === 0) {
+        table.innerHTML = "<tr><td>No items selected</td></tr>";
+        return;
+      }
+
+      // -------- BUILD TABLE --------
+      table.innerHTML = `
+        <tr>
+          <th>Feature</th>
+          ${items.map(p => `<th>${p.name}</th>`).join("")}
+        </tr>
+
+        <tr>
+          <td>Price</td>
+          ${items.map(p => `<td>${p.price}</td>`).join("")}
+        </tr>
+
+        <tr>
+          <td>Category</td>
+          ${items.map(p => `<td>${p.category || "-"}</td>`).join("")}
+        </tr>
+
+        <tr>
+          <td>Color</td>
+          ${items.map(p => `<td>${p.color || "-"}</td>`).join("")}
+        </tr>
+      `;
+
+      // -------- AI CALL --------
+      const aiRes = await fetch("/compare_ai");
+      console.log("AI RESPONSE STATUS:", aiRes.status);
+
+      const aiData = await aiRes.json();
+      console.log("AI DATA:", aiData);
+
+      const row = document.createElement("tr");
+
+      row.innerHTML = `
+        <td><strong>AI Insight</strong></td>
+        <td colspan="${items.length}">
+          ${marked.parse(aiData.explanation)}
+        </td>
+      `;
+
+      table.appendChild(row);
+    }
+
+
+    document.getElementById("btn-compare-close").onclick = () => {
+      document.getElementById("compare-backdrop").style.display = "none";
+    };
 
     function openDetails(id) {
-  const product = currentProducts.find(p => p.id === id);
-  if (!product) return;
+    console.log("Clicked ID:", id);
 
-  document.getElementById("modal-img").src = product.image;
-  document.getElementById("modal-title").innerText = product.name;
+    // 🔥 FIX: find product safely
+    let product = currentProducts.find(
+      p => p.product_id === id || p.id === id
+    );
 
-  document.getElementById("modal-desc").innerText =
-    product.description || "No description available";
+    // 🔥 if not found, check inside variants
+    if (!product) {
+      for (let p of currentProducts) {
+        if (p.variants) {
+          for (let v of Object.values(p.variants)) {
+            if (v.product_id === id) {
+              product = { ...p, ...v };
+              break;
+            }
+          }
+        }
+      }
+    }
 
-  const dim = (product.dimensions || "").split("\n").join("<br>");
-  document.getElementById("modal-dim").innerHTML = dim;
+    if (!product) {
+      console.log("Product NOT found");
+      return;
+    }
 
-  document.getElementById("thumb1").src = product.image;
-  document.getElementById("thumb2").src = product.image;
+    console.log("FOUND:", product);
 
-  // 🔥 IMPORTANT CHANGE
-  document.getElementById("details-modal").style.display = "flex";
-}
+    // ✅ IMAGE
+    let image = product.image;
 
-function closeDetails() {
-  document.getElementById("details-modal").style.display = "none";
-}
+    console.log("FINAL IMAGE:", image);
+
+    console.log("IMAGE URL:", image);  
+
+    const imgEl = document.getElementById("modal-img");
+    const variantContainer = document.getElementById("variant-container");
+    variantContainer.innerHTML = "";
+
+    const variants = Object.values(product.variants || {});
+
+    if (variants.length > 0) {
+      imgEl.src = variants[0].image;
+    } else {
+      imgEl.src = image && image.startsWith("http")
+        ? image
+        : "https://via.placeholder.com/300";
+    }
+
+    document.getElementById("modal-title").innerText = product.name || "";
+
+    // ✅ SHORT DESC
+    document.getElementById("modal-desc").innerText =
+      product.main_description || "";
+
+    // ✅ DETAILED
+    document.getElementById("modal-detailed").innerText =
+      product.detailed || "No detailed description";
+
+    // ✅ FEATURES
+    const features = (product.features || "").replace(/\n/g, "\n• ");
+    document.getElementById("modal-features").innerText =
+      features ? "• " + features : "No features available";
+
+    // ✅ DIMENSIONS
+    const dim = (product.dimensions || "").replace(/\n/g, "<br>");
+    document.getElementById("modal-dim").innerHTML = dim;
+
+    // ✅ SHOW MODAL
+    document.getElementById("details-modal").style.display = "flex";
+
+    variants.forEach((v, index) => {
+      const btn = document.createElement("button");
+      btn.className = "variant-btn";
+      btn.innerText = v.color || "Option";
+
+      if (index === 0) btn.classList.add("active");
+
+      btn.onclick = () => {
+        document.querySelectorAll(".variant-btn")
+          .forEach(b => b.classList.remove("active"));
+
+        btn.classList.add("active");
+
+        // 🔥 update image on click
+        imgEl.src = v.image;
+      };
+
+      variantContainer.appendChild(btn);
+    });
+  }
+
+  function closeDetails() {
+    document.getElementById("details-modal").style.display = "none";
+  }
+
+  document.getElementById("cart-btn").onclick = () => {
+    const panel = document.getElementById("cart-panel");
+    panel.style.display =
+      panel.style.display === "block" ? "none" : "block";
+  };
+
+  document.getElementById("close-cart").onclick = () => {
+    document.getElementById("cart-panel").style.display = "none";
+  };
+
+  document.getElementById("clear-cart").onclick = async () => {
+    await fetch("/clear_cart", {
+      method: "POST"
+    });
+
+    updateCart(); // refresh UI
+  };
+
+  document.getElementById("btn-compare-open").onclick = async () => {
+
+      const modal = document.getElementById("compare-backdrop");
+      const table = document.getElementById("compare-table");
+
+      modal.style.display = "flex";
+
+      const res = await fetch("/compare_get");
+      const data = await res.json();
+
+      const items = data.items;
+
+      // -------- TABLE --------
+      table.innerHTML = `
+        <tr>
+          <th>Feature</th>
+          ${items.map(p => `<th>${p.name}</th>`).join("")}
+        </tr>
+
+        <tr>
+          <td>Price</td>
+          ${items.map(p => `<td>${p.price}</td>`).join("")}
+        </tr>
+
+        <tr>
+          <td>Category</td>
+          ${items.map(p => `<td>${p.category || "-"}</td>`).join("")}
+        </tr>
+
+        <tr>
+          <td>Color</td>
+          ${items.map(p => `<td>${p.color || "-"}</td>`).join("")}
+        </tr>
+      `;
+
+      // -------- AI --------
+      const aiRes = await fetch("/compare_ai");
+      const aiData = await aiRes.json();
+
+      const row = document.createElement("tr");
+
+      row.innerHTML = `
+        <td><strong>AI Insight</strong></td>
+        <td colspan="${items.length}">
+          ${marked.parse(aiData.explanation)}
+        </td>
+      `;
+
+      table.appendChild(row);
+    };
+
+    document.getElementById("btn-compare-open").onclick = openCompareModal;
+
+    document.getElementById("btn-compare-close").onclick = () => {
+      document.getElementById("compare-backdrop").style.display = "none";
+    };
+
+    document.getElementById("btn-compare-clear").onclick = async () => {
+      await fetch("/compare_clear", {
+        method: "POST"
+      });
+
+      // refresh UI
+      loadCompare();
+
+      // also reset buttons
+      document.querySelectorAll(".actions button").forEach(btn => {
+        if (btn.innerText.includes("Comparing")) {
+          btn.classList.remove("active");
+          btn.innerText = "Compare";
+        }
+      });
+    };
 
   </script>
+  <!-- DETAILS MODAL -->
+  <div id="details-modal" class="modal">
 
- <!-- DETAILS MODAL -->
-<div id="details-modal" class="modal">
+    <div class="modal-content">
 
-  <div class="modal-content">   <!-- ✅ IMPORTANT WRAPPER -->
+      <span class="close" onclick="closeDetails()">✕</span>
 
-    <span class="close" onclick="closeDetails()">✕</span>
+      <div class="modal-layout">
 
-    <div class="modal-body-new">
-
-      <!-- TOP CENTER DETAILS -->
-      <div class="modal-top">
-        <h2 id="modal-title"></h2>
-        <p id="modal-desc"></p>
-      </div>
-
-      <!-- BOTTOM SECTION -->
-      <div class="modal-bottom">
-
-        <!-- LEFT: DIMENSIONS -->
+        <!-- LEFT: IMAGE -->
         <div class="modal-left">
-          <h4>Dimensions</h4>
-          <div id="modal-dim"></div>
+          <img id="modal-img" src="" />
         </div>
 
-        <!-- RIGHT: IMAGE -->
+        <!-- RIGHT: CONTENT -->
         <div class="modal-right">
-          <img id="modal-img" />
+
+          <h2 id="modal-title"></h2>
+          <p id="modal-desc"></p>
+          <div class="modal-variants">
+            <h4>Finish</h4>
+            <div id="variant-container"></div>
+          </div>
+
+          <div class="modal-section">
+            <h4>Detailed Description</h4>
+            <p id="modal-detailed"></p>
+          </div>
+
+          <div class="modal-section">
+            <h4>Features</h4>
+            <p id="modal-features"></p>
+          </div>
+
+          <div class="modal-section-lg">
+            <h4>Dimensions</h4>
+            <div id="modal-dim"></div>
+          </div>
+
         </div>
 
       </div>
 
     </div>
-
   </div>
-</div>
 
  </body>
 </html>
