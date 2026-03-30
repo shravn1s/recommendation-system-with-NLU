@@ -11,105 +11,46 @@
   <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet"/>
   <style>
    :root { --gap: 14px; --radius: 12px; --card-bg:#fff; --muted:#666; }
-    body { margin:0; color:#222; font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:#f7f7f8; }
+    body {
+      margin:0;
+      color:#222;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:#f7f7f8;
+    }
     header { position: sticky; top:0; z-index:10; display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:#0d0d0d; color:#fff; border-bottom:1px solid #111; }
     header h1 { margin:0; font-size:18px; letter-spacing:.2px; }
     .brand { display:flex; align-items:center; gap:8px; }
     .brand .dot { width:10px; height:10px; background:#2d6cdf; border-radius:50%; }
 
-    .container { max-width: 1080px; margin: 18px auto; padding: 0 16px; display: grid; gap: var(--gap); }
-    .panel { background: var(--card-bg); border: 1px solid #e9e9ec; border-radius: var(--radius); padding: 12px; }
-
-    /* Chat + Results stacked vertically */
-    .chat { display:grid; gap:10px; }
-    #chat-window {
-      height: 240px;
-      overflow: auto;
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 12px;
-
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .input-row { display:flex; gap:8px; }
-    .input-row input {
-      flex: 1;
-      padding: 10px 14px;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      background: #fff;
-      color: #222;
-      font-size: 14px;
-
-      /* soft squishy look */
-      box-shadow:
-        inset 0 1px 0 #fff,
-        0 1px 0 #eee,
-        0 2px 0 #e6e6e6,
-        0 3px 0 #e0e0e0;
-
-      transition: all 0.2s ease;
-    }
-    .input-row input:focus {
-      outline: none;
-      border-color: #aaa;
-
-      box-shadow:
-        inset 0 1px 0 #fff,
-        0 1px 0 #eee,
-        0 2px 0 #e6e6e6,
-        0 0 0 2px rgba(0,0,0,0.05);
-    }
-
-    .input-row input::placeholder {
-      color: #999;
-    }
-
-    /* Results as scrollable list */
-    #products { display:grid; gap:10px; max-height: 460px; overflow:auto; }
-    .item { display:grid; grid-template-columns: 120px 1fr auto; gap: 12px; align-items:center; border:1px solid #eee; background:#fff; border-radius: 10px; padding: 10px; }
-    .item img { width:120px; height:90px; object-fit:cover; border-radius:8px; border:1px solid #ddd; }
-    .item .title { font-weight:600; }
-    .item .meta { color: var(--muted); font-size: 13px; margin-top:2px; }
-    .item .price { font-weight:700; margin-top: 6px; }
-    .item .actions button { margin-right: 6px; }
-
     /* Cart dropdown */
     .cart-wrap { position:relative; }
     #cart-btn {
       background: #fff;
-      color: #222;
-      border: 1px solid #ddd;
-      padding: 10px 16px;
-      border-radius: 10px;
-      cursor: pointer;
+      color: #111;
+
+      border: 1px solid #e5e7eb;
+      border-radius: 999px;
+
+      padding: 6px 14px;   /* 🔥 smaller */
+      font-size: 13px;
       font-weight: 600;
-      font-size: 14px;
 
-      /* ✨ squishy effect */
-      box-shadow:
-        inset 0 1px 0 #fff,
-        0 1px 0 #eee,
-        0 2px 0 #e6e6e6,
-        0 3px 0 #e0e0e0,
-        0 4px 6px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      gap: 6px;
 
+      cursor: pointer;
       transition: all 0.2s ease;
+
+      /* ❌ REMOVE squishy shadows */
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
     }
 
     #cart-btn:hover {
-      transform: translateY(2px);
-
-      box-shadow:
-        inset 0 1px 0 #fff,
-        0 1px 0 #eee,
-        0 1px 0 #e6e6e6,
-        0 2px 0 #e0e0e0,
-        0 2px 4px rgba(0,0,0,0.08);
+      transform: none;   /* ❌ remove push-down */
+      background: #f3f4f6;
     }
+
     #cart-count { margin-left:8px; font-weight:700; background:rgba(255,255,255,0.3); padding:2px 6px; border-radius:4px; }
     #cart-panel { position:absolute; right:0; top:50px; width: 480px; background:#fff; border:1px solid #ddd; border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,0.15); display:none; padding:16px; max-height:80vh; overflow-y:auto; z-index:1000; }
     #cart-panel h3 { margin:0 0 16px 0; font-size:18px; color:#222; border-bottom:2px solid #2d6cdf; padding-bottom:12px; }
@@ -204,8 +145,26 @@
     .muted { color:#777; font-style:italic; }
 
     /* Recently Viewed and Recommendations */
-    #recent-section, #recommend-section { display: none; }
-    .recent-grid, .recommend-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:18px; max-height: 380px; overflow:auto; padding:8px 0; }
+    .recent-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 18px;
+
+      max-height: 380px;
+      overflow: auto;
+      padding: 8px 0;
+    }
+
+    .recommend-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 18px;
+
+      max-height: 420px;
+      min-height: 250px;   
+      overflow-y: auto;
+      padding: 8px 0;
+    }
 
     /* ====== NEW: Compare Drawer & Modal ====== */
     .compare-drawer {
@@ -225,18 +184,12 @@
       margin-left:auto; background:#2d6cdf; color:#fff; border:0; padding:8px 12px; border-radius:8px; cursor:pointer;
     }
     #btn-compare-clear { background:#f3f4f6; border:1px solid #e5e7eb; padding:8px 12px; border-radius:8px; cursor:pointer; }
-    #compare-modal header { display:flex; justify-content:space-between; align-items:center; }
-    #compare-modal header h3 {
-    font-size: 18px;
-    font-weight: 600;
-  }
+  
   </style>
  </head>
  <body>
   <header>
    <div class="brand">
-    <span class="dot">
-    </span>
     <h1>
      Kohler Sales Assistant
     </h1>
@@ -303,32 +256,36 @@
   <div class="container">
 
    <!-- Chat -->
-   <section class="panel chat">
+   <div class="main-layout">
+
+  <!-- LEFT (Assistant) -->
+  <section class="panel chat">
     <div class="panel-title">
       Assistant
     </div>
+
     <div id="chat-window">
-     <div class="msg sys">
-      Hi! Ask me for products, filters, or quick comparisons. (I&rsquo;ll keep it short.)
-     </div>
+      <div class="msg sys">
+        Hi! Ask me for products, filters, or quick comparisons. (I’ll keep it short.)
+      </div>
     </div>
-    <div class="input-row">
-     <input id="msg" placeholder="e.g., Show me 3 matte black faucets under $300" type="text"/>
-     <button id="send" type="button">
-      Send
-     </button>
+
+    <div class="chat-input">
+      <input id="msg" placeholder="e.g., Show me 3 matte black faucets under $300" type="text"/>
+      <button id="send" type="button">Send</button>
     </div>
-   </section>
-   <!-- Results (responsive card grid) -->
-   <section class="panel" id="results-section" style="display: none;">
+  </section>
+
+  <!-- RIGHT (Results) -->
+  <section class="panel" id="results-section">
     <div style="display:flex;justify-content:space-between;align-items:center;">
-     <div class="panel-title">
-      Results
-     </div>
+      <div class="panel-title">Results</div>
     </div>
-    <div id="products">
-    </div>
-   </section>
+
+    <div id="products"></div>
+  </section>
+
+</div>
    <!-- Recently Viewed -->
    <section class="panel" id="recent-section" style="display: none;">
     <div class="panel-title">
@@ -338,7 +295,7 @@
     </div>
    </section>
    <!-- Recommendations -->
-   <section class="panel" id="recommend-section" style="display: none;">
+   <section class="panel" id="recommend-section">
     <div class="panel-title">
      Recommended for You
     </div>
@@ -365,10 +322,10 @@
   <div id="compare-backdrop">
   <div id="compare-modal">
 
-    <header>
+    <div class="modal-header">
       <h3>Compare Products</h3>
       <button id="btn-compare-close">✖</button>
-    </header>
+    </div>
 
     <table class="compare-grid" id="compare-table"></table>
 
@@ -501,12 +458,27 @@
         const data = await res.json();
 
         if (data.items && data.items.length > 0) {
-          document.getElementById("recommend-section").style.display = "block";
-
           renderProducts(data.items, "recommend-products");
         }
       } catch (e) {
         console.error("Recommendation error", e);
+      }
+    }
+
+    async function loadInitialProducts() {
+      try {
+        const res = await fetch("/recommend_get");   // 👈 reuse existing API
+        const data = await res.json();
+
+        if (data.items && data.items.length > 0) {
+          currentProducts = data.items;
+
+          document.getElementById("results-section").style.display = "block";
+
+          renderProducts(currentProducts);
+        }
+      } catch (e) {
+        console.error("Initial load error", e);
       }
     }
 
@@ -978,6 +950,10 @@
         }
       });
     };
+
+  window.onload = () => {
+    loadInitialProducts();
+  };
 
   </script>
   <!-- DETAILS MODAL -->
